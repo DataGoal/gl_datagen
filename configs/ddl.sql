@@ -3,9 +3,9 @@
 -- DeltaLake plugin version: 0.2.47
 -- Ignored based on script generation options: None
 
-CREATE SCHEMA IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact;
+CREATE SCHEMA IF NOT EXISTS development.dev_pbi_perform_cf_poc;
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.accounting_document_type (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.accounting_document_type (
     accounting_document_type_id bigint NOT NULL PRIMARY KEY,
     accounting_document_type_cd string,
     accounting_document_type_nm string,
@@ -14,12 +14,12 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     accounting_document_type_cd_nm string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.atscale_geo_security (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.atscale_geo_security (
     region varchar(255) NOT NULL PRIMARY KEY,
     role string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.calendar_fiscal_period_v (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.calendar_fiscal_period_v (
     fiscal_year_period_nbr int NOT NULL PRIMARY KEY,
     month_long_nm string,
     month_short_nm string,
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     fiscal_period_sort int
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.CIS_fact (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.CIS_fact (
     gl_account_id bigint NOT NULL PRIMARY KEY,
     profit_center_nbr string,
     fiscal_year_period_nbr int,
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     consolidated_channel_nm string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.company_code (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.company_code (
     company_id bigint NOT NULL PRIMARY KEY,
     company_cd string,
     company_nm string,
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     physical_source_cd string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.consolidated_balance_sheet_fact (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.consolidated_balance_sheet_fact (
     consolidated_balance_sheet_fact_id bigint NOT NULL PRIMARY KEY,
     financial_statement_item_cd string,
     profit_center_nbr string,
@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     foreign_exchange_type_cd string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.consolidation_functional_area_hierarchy (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.consolidation_functional_area_hierarchy (
     consolidation_functional_area_hierarchy_id bigint NOT NULL PRIMARY KEY,
     active_ind string,
     functional_area_cd string,
@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     _consolidation_functional_area_hierarchy_raw_latest_load_tmst date
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.consolidation_segment_hierarchy_dim (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.consolidation_segment_hierarchy_dim (
     consolidation_segment_hierarchy_id bigint NOT NULL PRIMARY KEY,
     segment_nbr int,
     segment_desc string,
@@ -236,7 +236,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     active_ind string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.segment_cost_center_hierarchy_dim_v (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.segment_cost_center_hierarchy_dim_v (
     cost_center_hierarchy_hist_id bigint NOT NULL PRIMARY KEY,
     cost_center_nbr string,
     cost_center_hierarchy_nm string,
@@ -303,7 +303,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     controlling_area_cd string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.segment_profit_center_hierarchy (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.segment_profit_center_hierarchy (
     segment_profit_center_nbr varchar(255) NOT NULL PRIMARY KEY,
     profit_center_hierarchy_nm string,
     profit_center_level_1_cd string,
@@ -326,14 +326,14 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     profit_center_level_9_nm string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.version_forecast_mapping (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.version_forecast_mapping (
     version_forecast_mapping_id bigint NOT NULL PRIMARY KEY,
     version_nbr string,
     version_group_nm string,
     active_ind string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.copa_attribution_dim (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.copa_attribution_dim (
     copa_attribution_id bigint NOT NULL PRIMARY KEY,
     responsive_business_model_cd string,
     responsive_business_model_desc string,
@@ -364,7 +364,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     sales_order_reason_cd string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.cost_center_dim_v (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.cost_center_dim_v (
     cost_center_nbr varchar(255) NOT NULL PRIMARY KEY,
     controlling_area_cd string,
     valid_to_dt date,
@@ -424,7 +424,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     _cost_center_cleansed_latest_load_timestamp date
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.DisChannel_cost_center_hierarchy_dim_v (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.DisChannel_cost_center_hierarchy_dim_v (
     cost_center_hierarchy_hist_id bigint NOT NULL PRIMARY KEY,
     cost_center_nbr string,
     cost_center_hierarchy_nm string,
@@ -491,7 +491,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     controlling_area_cd string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.DisChannel_profit_center_hierarchy (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.DisChannel_profit_center_hierarchy (
     profit_center_hierarchy_id bigint NOT NULL PRIMARY KEY,
     distrchnl_profit_center_nbr string,
     controlling_area_cd string,
@@ -516,7 +516,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     profit_center_level_9_nm string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.division_text (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.division_text (
     division_id bigint NOT NULL PRIMARY KEY,
     division_nbr varchar(50),
     division_nm string,
@@ -534,14 +534,14 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     active_ind string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.division_text_dim_v (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.division_text_dim_v (
     division_nbr varchar(50) NOT NULL PRIMARY KEY,
     division_nm string,
     division_id bigint,
     division_group string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.finance_customer_dim_v (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.finance_customer_dim_v (
     finance_customer_id bigint NOT NULL PRIMARY KEY,
     customer_nbr string,
     channel_desc string,
@@ -561,7 +561,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     partner_account_classification string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.finance_foreign_currency_exchange_rate (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.finance_foreign_currency_exchange_rate (
     finance_foreign_currency_exchange_rate_id bigint NOT NULL PRIMARY KEY,
     from_currency_cd string,
     exchange_rate_cd string,
@@ -573,7 +573,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     active_ind string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.finance_product_dim_v (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.finance_product_dim_v (
     product_id bigint NOT NULL PRIMARY KEY,
     primary_platform_desc string,
     style_nm string,
@@ -608,14 +608,14 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     sub_brand_cd string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.functional_area (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.functional_area (
     functional_area_id bigint NOT NULL PRIMARY KEY,
     language_cd string,
     functional_area_cd string,
     functional_area_nm string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact (
     general_ledger_fact_id bigint NOT NULL PRIMARY KEY,
     fiscal_year_period_nbr int,
     profit_center_id bigint,
@@ -648,7 +648,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     transaction_currency_cd string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.geo_marketplace_channel_dim (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.geo_marketplace_channel_dim (
     geo_marketplace_channel_id bigint NOT NULL PRIMARY KEY,
     geo_marketplace_channel_nm string,
     created_by_user_id string,
@@ -657,7 +657,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     active_ind string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.geo_wholesale_value_business_dim (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.geo_wholesale_value_business_dim (
     geo_wholesale_value_business_id bigint NOT NULL PRIMARY KEY,
     geo_wholesale_value_business_desc string,
     created_by_user_id string,
@@ -665,7 +665,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     physical_source_cd string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.gl_account_dim (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.gl_account_dim (
     gl_account_nbr varchar(255) NOT NULL PRIMARY KEY,
     gl_account_short_desc string,
     gl_account_long_desc string,
@@ -676,7 +676,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     cost_component_calc string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.gl_account_hierarchy (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.gl_account_hierarchy (
     gl_account_hierarchy_id bigint NOT NULL PRIMARY KEY,
     gl_account_nbr string,
     hierarchy_chart_of_accounts_cd string,
@@ -782,7 +782,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     _gl_account_hierarchy_cleansed_latest_load_timestamp date
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.gl_account_zfsm_measures_hierarchy_dim (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.gl_account_zfsm_measures_hierarchy_dim (
     zfsm_measure_id bigint NOT NULL PRIMARY KEY,
     created_by_user_id string,
     updated_by_user_id string,
@@ -820,7 +820,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     record_update_tmst_utc date
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.management_gl_account_hierarchy (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.management_gl_account_hierarchy (
     gl_account_hierarchy_id bigint NOT NULL PRIMARY KEY,
     gl_account_nbr string,
     hierarchy_chart_of_accounts_cd string,
@@ -923,7 +923,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     hierarchy_cd_nm string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.PartDisChannel_profit_center_hierarchy (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.PartDisChannel_profit_center_hierarchy (
     profit_center_hierarchy_id bigint NOT NULL PRIMARY KEY,
     controlling_area_cd string,
     profit_center_hierarchy_nm string,
@@ -948,7 +948,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     prtrdistrchnl_profit_center_nbr string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.profit_center (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.profit_center (
     profit_center_id bigint NOT NULL PRIMARY KEY,
     profit_center_nbr string,
     profit_center_nm string,
@@ -964,7 +964,7 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     operating_segment_nm string
 );
 
-CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fact.retail_global_store_profile_v (
+CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.retail_global_store_profile_v (
     address_match_type_name string,
     store_uuid string,
     application_reason_desc string,
@@ -1103,47 +1103,47 @@ CREATE TABLE IF NOT EXISTS development.dev_pbi_perform_cf_poc.general_ledger_fac
     key_trade_zone_name string
 );
 
-USE development.dev_pbi_perform_cf_poc.general_ledger_fact;
+USE development.dev_pbi_perform_cf_poc;
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_accounting_document_type_accounting_document_type_id_to_general_ledger_fact_accounting_document_type_id FOREIGN KEY (accounting_document_type_id) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.accounting_document_type(accounting_document_type_id);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_accounting_document_type_accounting_document_type_id_to_general_ledger_fact_accounting_document_type_id FOREIGN KEY (accounting_document_type_id) REFERENCES development.dev_pbi_perform_cf_poc.accounting_document_type(accounting_document_type_id);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_calendar_fiscal_period_v_fiscal_year_period_nbr_to_general_ledger_fact_fiscal_year_period_nbr FOREIGN KEY (fiscal_year_period_nbr) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.calendar_fiscal_period_v(fiscal_year_period_nbr);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_calendar_fiscal_period_v_fiscal_year_period_nbr_to_general_ledger_fact_fiscal_year_period_nbr FOREIGN KEY (fiscal_year_period_nbr) REFERENCES development.dev_pbi_perform_cf_poc.calendar_fiscal_period_v(fiscal_year_period_nbr);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_profit_center_profit_center_id_to_general_ledger_fact_profit_center_id FOREIGN KEY (profit_center_id) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.profit_center(profit_center_id);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_profit_center_profit_center_id_to_general_ledger_fact_profit_center_id FOREIGN KEY (profit_center_id) REFERENCES development.dev_pbi_perform_cf_poc.profit_center(profit_center_id);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_division_text_division_id_to_general_ledger_fact_division_id FOREIGN KEY (division_id) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.division_text(division_id);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_division_text_division_id_to_general_ledger_fact_division_id FOREIGN KEY (division_id) REFERENCES development.dev_pbi_perform_cf_poc.division_text(division_id);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_version_forecast_mapping_version_forecast_mapping_id_to_general_ledger_fact_version_forecast_mapping_id FOREIGN KEY (version_forecast_mapping_id) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.version_forecast_mapping(version_forecast_mapping_id);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_version_forecast_mapping_version_forecast_mapping_id_to_general_ledger_fact_version_forecast_mapping_id FOREIGN KEY (version_forecast_mapping_id) REFERENCES development.dev_pbi_perform_cf_poc.version_forecast_mapping(version_forecast_mapping_id);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_functional_area_functional_area_id_to_general_ledger_fact_functional_area_id FOREIGN KEY (functional_area_id) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.functional_area(functional_area_id);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_functional_area_functional_area_id_to_general_ledger_fact_functional_area_id FOREIGN KEY (functional_area_id) REFERENCES development.dev_pbi_perform_cf_poc.functional_area(functional_area_id);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_finance_product_dim_v_product_id_to_general_ledger_fact_product_id FOREIGN KEY (product_id) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.finance_product_dim_v(product_id);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_finance_product_dim_v_product_id_to_general_ledger_fact_product_id FOREIGN KEY (product_id) REFERENCES development.dev_pbi_perform_cf_poc.finance_product_dim_v(product_id);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_finance_customer_dim_v_finance_customer_id_to_general_ledger_fact_customer_id FOREIGN KEY (customer_id) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.finance_customer_dim_v(finance_customer_id);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_finance_customer_dim_v_finance_customer_id_to_general_ledger_fact_customer_id FOREIGN KEY (customer_id) REFERENCES development.dev_pbi_perform_cf_poc.finance_customer_dim_v(finance_customer_id);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_company_code_company_id_to_general_ledger_fact_company_id FOREIGN KEY (company_id) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.company_code(company_id);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_company_code_company_id_to_general_ledger_fact_company_id FOREIGN KEY (company_id) REFERENCES development.dev_pbi_perform_cf_poc.company_code(company_id);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_copa_attribution_dim_copa_attribution_id_to_general_ledger_fact_copa_attribution_id FOREIGN KEY (copa_attribution_id) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.copa_attribution_dim(copa_attribution_id);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_copa_attribution_dim_copa_attribution_id_to_general_ledger_fact_copa_attribution_id FOREIGN KEY (copa_attribution_id) REFERENCES development.dev_pbi_perform_cf_poc.copa_attribution_dim(copa_attribution_id);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_cost_center_dim_v_cost_center_nbr_to_general_ledger_fact_cost_center_nbr FOREIGN KEY (cost_center_nbr) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.cost_center_dim_v(cost_center_nbr);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_cost_center_dim_v_cost_center_nbr_to_general_ledger_fact_cost_center_nbr FOREIGN KEY (cost_center_nbr) REFERENCES development.dev_pbi_perform_cf_poc.cost_center_dim_v(cost_center_nbr);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_geo_wholesale_value_business_dim_geo_wholesale_value_business_id_to_general_ledger_fact_geo_wholesale_value_business_id FOREIGN KEY (geo_wholesale_value_business_id) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.geo_wholesale_value_business_dim(geo_wholesale_value_business_id);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_geo_wholesale_value_business_dim_geo_wholesale_value_business_id_to_general_ledger_fact_geo_wholesale_value_business_id FOREIGN KEY (geo_wholesale_value_business_id) REFERENCES development.dev_pbi_perform_cf_poc.geo_wholesale_value_business_dim(geo_wholesale_value_business_id);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_geo_marketplace_channel_dim_geo_marketplace_channel_id_to_general_ledger_fact_geo_marketplace_channel_id FOREIGN KEY (geo_marketplace_channel_id) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.geo_marketplace_channel_dim(geo_marketplace_channel_id);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_geo_marketplace_channel_dim_geo_marketplace_channel_id_to_general_ledger_fact_geo_marketplace_channel_id FOREIGN KEY (geo_marketplace_channel_id) REFERENCES development.dev_pbi_perform_cf_poc.geo_marketplace_channel_dim(geo_marketplace_channel_id);
 
-ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact.general_ledger_fact
-ADD CONSTRAINT fk_gl_account_dim_gl_account_nbr_to_general_ledger_fact_gl_account_nbr FOREIGN KEY (gl_account_nbr) REFERENCES development.dev_pbi_perform_cf_poc.general_ledger_fact.gl_account_dim(gl_account_nbr);
+ALTER TABLE development.dev_pbi_perform_cf_poc.general_ledger_fact
+ADD CONSTRAINT fk_gl_account_dim_gl_account_nbr_to_general_ledger_fact_gl_account_nbr FOREIGN KEY (gl_account_nbr) REFERENCES development.dev_pbi_perform_cf_poc.gl_account_dim(gl_account_nbr);
 
