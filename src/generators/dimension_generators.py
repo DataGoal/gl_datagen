@@ -315,7 +315,7 @@ def gen_finance_product_dim_v(spark: SparkSession, rows: int, partitions: int) -
                     "Blazer", "Cortez", "Dunk", "Flyknit", "Free", "Metcon", "Revolution"],
                    weights=[15, 12, 15, 10, 8, 8, 5, 5, 5, 5, 4, 3, 3, 2])
     gen = enum_col(gen, "gender_desc",
-                   ["Men's", "Women's", "Kids'", "Unisex", "Grade School", "Toddler"],
+                   ["Mens", "Womens", "Kids", "Unisex", "Grade School", "Toddler"],
                    weights=[35, 30, 15, 10, 7, 3])
     gen = enum_col(gen, "global_category_core_focus_desc",
                    ["Running", "Training & Gym", "Basketball", "Football", "Sportswear",
@@ -433,7 +433,7 @@ def gen_copa_attribution_dim(spark: SparkSession, rows: int, partitions: int) ->
     gen = enum_col(gen, "gender_age_cd",
                    ["MN", "WN", "KD", "GS", "BG", "TD"], weights=[30, 25, 15, 12, 10, 8])
     gen = enum_col(gen, "gender_age_desc",
-                   ["Men's", "Women's", "Kids'", "Grade School", "Big Kids", "Toddler"],
+                   ["Mens", "Womens", "Kids", "Grade School", "Big Kids", "Toddler"],
                    weights=[30, 25, 15, 12, 10, 8])
     gen = template_string(gen, "direct_business_model_cd", r"rrd")
     gen = template_string(gen, "direct_business_model_desc", r"rrrrrrrrr rrrr")
