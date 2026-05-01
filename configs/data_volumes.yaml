@@ -18,7 +18,7 @@ environment:
 # Primary fact table — this is the anchor for all scale-out tests
 # ---------------------------------------------------------------------------
 general_ledger_fact:
-  rows: 1000             # ← change to 25_000_000_000 for 25B rows
+  rows: 25_000_000             # ← change to 25_000_000_000 for 25B rows
   partitions: 400                # tune to (target_rows / ~250k per partition)
   shuffle_partitions: 400        # spark.sql.shuffle.partitions
 
@@ -85,11 +85,11 @@ gl_account_dim:
 # Secondary fact / view tables
 # ---------------------------------------------------------------------------
 CIS_fact:
-  rows: 1000
+  rows: 100_000
   partitions: 100
 
 consolidated_balance_sheet_fact:
-  rows: 500
+  rows: 500_000
   partitions: 50
 
 # ---------------------------------------------------------------------------
