@@ -584,6 +584,8 @@ tables:
 
   - name: segment_profit_center_hierarchy
     columns:
+      - name: __segment_profit_center_nbr_id
+        data_type: bigint
       - name: segment_profit_center_nbr
         data_type: varchar(255)
         constraints: [primary_key, not_null]

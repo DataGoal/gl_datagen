@@ -23,6 +23,7 @@ from utils.datagen_helpers import (
     date_col,
     decimal_amount,
     enum_col,
+    fiscal_period_values,
     fk_bigint,
     make_generator,
     pk_bigint,
@@ -71,65 +72,66 @@ def gen_accounting_document_type(spark: SparkSession, rows: int, partitions: int
 def gen_calendar_fiscal_period_v(spark: SparkSession, rows: int, partitions: int) -> DataFrame:
     """
     Generate realistic fiscal calendar periods.
-    fiscal_year_period_nbr format: YYYYPP (e.g. 202403 = FY2024, Period 3)
+
+    fiscal_year_period_nbr (PK) format: YYYYPP (e.g. 202403 = FY2024, Period 3).
+    The set of values comes from :func:`fiscal_period_values` so the central fact
+    table can sample from the exact same domain via ``fiscal_year_period(..., count=...)``.
     """
+    import calendar
     import datetime
 
+    period_values = fiscal_period_values(rows)
+
     records = []
-    period_id = 1
-    for yr in range(2018, 2027):
-        for mo in range(1, 13):
-            if period_id > rows:
-                break
-            fy_period = yr * 100 + mo
-            cal_q = (mo - 1) // 3 + 1
-            fiscal_q = cal_q  # simplification: fiscal Q = calendar Q
-            start = datetime.date(yr, mo, 1)
-            import calendar
-            last_day = calendar.monthrange(yr, mo)[1]
-            end = datetime.date(yr, mo, last_day)
-            records.append((
-                fy_period,                             # fiscal_year_period_nbr (PK)
-                start.strftime("%B"),                  # month_long_nm
-                start.strftime("%b"),                  # month_short_nm
-                mo,                                    # month_nbr
-                yr * 100 + mo,                         # year_mth
-                start,                                 # month_relevance_dt
-                start,                                 # month_start_dt
-                end,                                   # month_end_dt
-                period_id,                             # month_sort_sequence_nbr
-                mo,                                    # fiscal_period_nbr
-                f"P{mo:02d}",                          # fiscal_period_cd
-                period_id,                             # fiscal_period_sort_sequence_nbr
-                f"FY{yr}P{mo:02d}",                   # fiscal_year_period_cd
-                f"FY{yr} Period {mo:02d}",            # fiscal_year_period_nm
-                f"S{(mo-1)//6+1}",                    # season_period_cd
-                f"S{(mo-1)//6+1}A",                   # season_alternate_period_cd
-                "Fall/Winter" if mo >= 7 else "Spring/Summer",  # season_nm
-                start,                                 # season_relevance_dt
-                start,                                 # season_start_dt
-                end,                                   # season_end_dt
-                period_id,                             # season_sort_sequence_nbr
-                cal_q,                                 # quarter_calendar_nbr
-                cal_q,                                 # quarter_calendar_sequence_nbr
-                cal_q,                                 # quarter_business_nbr
-                fiscal_q,                              # fiscal_quarter_nbr
-                f"Q{fiscal_q}",                        # fiscal_quarter_cd
-                fiscal_q,                              # fiscal_quarter_sort_sequence_nbr
-                yr * 10 + fiscal_q,                    # fiscal_year_quarter_nbr
-                f"FY{yr}Q{fiscal_q}",                  # fiscal_year_quarter_cd
-                f"FY{yr}-Q{fiscal_q}",                 # fiscal_year_quarter_alternate_cd
-                str(yr),                               # year_cd
-                f"FY{yr}",                             # year_nm
-                str(yr),                               # year_nbr
-                datetime.date(yr, 1, 1),               # year_start_dt
-                datetime.date(yr, 12, 31),             # year_end_dt
-                yr,                                    # business_year_nbr
-                yr,                                    # fiscal_year_nbr
-                f"FY{yr}",                             # fiscal_year_cd
-                period_id,                             # fiscal_period_sort
-            ))
-            period_id += 1
+    for period_id, fy_period in enumerate(period_values, start=1):
+        yr = fy_period // 100
+        mo = fy_period % 100
+        cal_q = (mo - 1) // 3 + 1
+        fiscal_q = cal_q  # simplification: fiscal Q = calendar Q
+        start = datetime.date(yr, mo, 1)
+        last_day = calendar.monthrange(yr, mo)[1]
+        end = datetime.date(yr, mo, last_day)
+        records.append((
+            fy_period,                             # fiscal_year_period_nbr (PK)
+            start.strftime("%B"),                  # month_long_nm
+            start.strftime("%b"),                  # month_short_nm
+            mo,                                    # month_nbr
+            yr * 100 + mo,                         # year_mth
+            start,                                 # month_relevance_dt
+            start,                                 # month_start_dt
+            end,                                   # month_end_dt
+            period_id,                             # month_sort_sequence_nbr
+            mo,                                    # fiscal_period_nbr
+            f"P{mo:02d}",                          # fiscal_period_cd
+            period_id,                             # fiscal_period_sort_sequence_nbr
+            f"FY{yr}P{mo:02d}",                    # fiscal_year_period_cd
+            f"FY{yr} Period {mo:02d}",             # fiscal_year_period_nm
+            f"S{(mo-1)//6+1}",                     # season_period_cd
+            f"S{(mo-1)//6+1}A",                    # season_alternate_period_cd
+            "Fall/Winter" if mo >= 7 else "Spring/Summer",  # season_nm
+            start,                                 # season_relevance_dt
+            start,                                 # season_start_dt
+            end,                                   # season_end_dt
+            period_id,                             # season_sort_sequence_nbr
+            cal_q,                                 # quarter_calendar_nbr
+            cal_q,                                 # quarter_calendar_sequence_nbr
+            cal_q,                                 # quarter_business_nbr
+            fiscal_q,                              # fiscal_quarter_nbr
+            f"Q{fiscal_q}",                        # fiscal_quarter_cd
+            fiscal_q,                              # fiscal_quarter_sort_sequence_nbr
+            yr * 10 + fiscal_q,                    # fiscal_year_quarter_nbr
+            f"FY{yr}Q{fiscal_q}",                  # fiscal_year_quarter_cd
+            f"FY{yr}-Q{fiscal_q}",                 # fiscal_year_quarter_alternate_cd
+            str(yr),                               # year_cd
+            f"FY{yr}",                             # year_nm
+            str(yr),                               # year_nbr
+            datetime.date(yr, 1, 1),               # year_start_dt
+            datetime.date(yr, 12, 31),             # year_end_dt
+            yr,                                    # business_year_nbr
+            yr,                                    # fiscal_year_nbr
+            f"FY{yr}",                             # fiscal_year_cd
+            period_id,                             # fiscal_period_sort
+        ))
 
     schema = T.StructType([
         T.StructField("fiscal_year_period_nbr", T.IntegerType(), False),
@@ -172,7 +174,7 @@ def gen_calendar_fiscal_period_v(spark: SparkSession, rows: int, partitions: int
         T.StructField("fiscal_year_cd", T.StringType(), True),
         T.StructField("fiscal_period_sort", T.IntegerType(), True),
     ])
-    return spark.createDataFrame(records[:rows], schema)
+    return spark.createDataFrame(records, schema).repartition(max(1, partitions))
 
 
 # ---------------------------------------------------------------------------
@@ -524,7 +526,11 @@ def gen_cost_center_dim_v(spark: SparkSession, rows: int, partitions: int) -> Da
     gen = date_col(gen, "msg_header_tmst", nullable_pct=0.3)
     gen = date_col(gen, "begin_effective_dt", begin="2000-01-01", end="2020-12-31")
     gen = date_col(gen, "end_effective_dt", begin="2025-01-01", end="2035-12-31")
-    gen = gen.withColumn("cost_center_id", T.LongType(), minValue=1, maxValue=rows, random=True)
+    gen = gen.withColumn(
+        "cost_center_id", T.LongType(),
+        baseColumn="__cost_center_nbr_id",
+        expr="__cost_center_nbr_id",
+    )
     gen = date_col(gen, "_cost_center_cleansed_latest_load_timestamp", begin="2023-01-01", end="2025-12-31")
     return gen.build()
 
@@ -583,6 +589,10 @@ def gen_gl_account_dim(spark: SparkSession, rows: int, partitions: int) -> DataF
     gen = date_col(gen, "begin_effective_dt", begin="2000-01-01", end="2018-12-31")
     gen = date_col(gen, "end_effective_dt", begin="2025-01-01", end="2035-12-31")
     gen = active_ind_col(gen)
-    gen = gen.withColumn("gl_accnt_id", T.LongType(), minValue=1, maxValue=rows, random=True)
+    gen = gen.withColumn(
+        "gl_accnt_id", T.LongType(),
+        baseColumn="__gl_account_nbr_id",
+        expr="__gl_account_nbr_id",
+    )
     gen = enum_col(gen, "cost_component_calc", ["Y", "N", ""], weights=[30, 30, 40])
     return gen.build()

@@ -119,37 +119,29 @@ for t in tables_to_check:
 
 # COMMAND ----------
 
-# MAGIC %md ## 4. Sample referential integrity check
+# MAGIC %md ## 4. Referential-integrity verification
+# MAGIC
+# MAGIC `verify_integrity()` runs three families of checks and prints a report:
+# MAGIC 1. PK uniqueness on facts and dimensions.
+# MAGIC 2. FK integrity from `general_ledger_fact` to every declared dim
+# MAGIC    (joined on a 1M-row sample by default).
+# MAGIC 3. Natural-key joinability for `CIS_fact` and
+# MAGIC    `consolidated_balance_sheet_fact` (`profit_center_nbr`,
+# MAGIC    `functional_area_cd`, `division_nbr`, `fiscal_year_period_nbr`).
+# MAGIC
+# MAGIC Every check should report `orphans=0` for the dataset to be safe to
+# MAGIC build aggregate tables on top of.
 
 # COMMAND ----------
 
-# Verify every FK in a sample of general_ledger_fact rows resolves to a valid dim row
-sample_sql = f"""
-SELECT
-    COUNT(*) AS total_rows,
-    COUNT(pc.profit_center_id)          AS matched_profit_center,
-    COUNT(fa.functional_area_id)        AS matched_functional_area,
-    COUNT(co.company_id)                AS matched_company,
-    COUNT(dt.division_id)               AS matched_division,
-    COUNT(vfm.version_forecast_mapping_id) AS matched_version,
-    COUNT(pd.product_id)                AS matched_product,
-    COUNT(cu.finance_customer_id)       AS matched_customer,
-    COUNT(ca.copa_attribution_id)       AS matched_copa,
-    COUNT(adt.accounting_document_type_id) AS matched_doc_type
-FROM
-    (SELECT * FROM `{catalog}`.`{schema}`.`general_ledger_fact` LIMIT 100000) gl
-    LEFT JOIN `{catalog}`.`{schema}`.`profit_center`            pc  ON gl.profit_center_id = pc.profit_center_id
-    LEFT JOIN `{catalog}`.`{schema}`.`functional_area`          fa  ON gl.functional_area_id = fa.functional_area_id
-    LEFT JOIN `{catalog}`.`{schema}`.`company_code`             co  ON gl.company_id = co.company_id
-    LEFT JOIN `{catalog}`.`{schema}`.`division_text`            dt  ON gl.division_id = dt.division_id
-    LEFT JOIN `{catalog}`.`{schema}`.`version_forecast_mapping` vfm ON gl.version_forecast_mapping_id = vfm.version_forecast_mapping_id
-    LEFT JOIN `{catalog}`.`{schema}`.`finance_product_dim_v`    pd  ON gl.product_id = pd.product_id
-    LEFT JOIN `{catalog}`.`{schema}`.`finance_customer_dim_v`   cu  ON gl.customer_id = cu.finance_customer_id
-    LEFT JOIN `{catalog}`.`{schema}`.`copa_attribution_dim`     ca  ON gl.copa_attribution_id = ca.copa_attribution_id
-    LEFT JOIN `{catalog}`.`{schema}`.`accounting_document_type` adt ON gl.accounting_document_type_id = adt.accounting_document_type_id
-"""
+results = orch.verify_integrity(sample_rows=1_000_000)
 
-display(spark.sql(sample_sql))
+assert all(v["ok"] for v in results.get("pk_uniqueness", {}).values()), \
+    "PK uniqueness violation detected"
+assert all(v["ok"] for v in results.get("fk_integrity", {}).values()), \
+    "FK integrity violation detected"
+assert all(v["ok"] for v in results.get("natural_key_integrity", {}).values()), \
+    "Natural-key integrity violation detected"
 
 # COMMAND ----------
 

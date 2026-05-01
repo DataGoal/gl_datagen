@@ -89,14 +89,23 @@ def pk_string(
     col_name: str,
     prefix: str,
     zero_pad: int = 6,
+    keep_id_col: bool = False,
 ) -> dg.DataGenerator:
     """
     String PK derived from a sequential counter.
-    e.g. prefix='CC', zero_pad=6  →  'CC_000001' … 'CC_005000'
+    e.g. prefix='CC', zero_pad=6  ->  'CC_000001' ... 'CC_005000'
+
+    A hidden bigint counter `__{col_name}_id` is created to back the string.
+    By default it is OMITTED from the output. Set ``keep_id_col=True`` to
+    expose it (used when the schema explicitly contains the id column).
     """
     id_col = f"__{col_name}_id"
-    gen = gen.withColumn(id_col, T.LongType(), minValue=1, maxValue=gen.rowCount,
-                         uniqueValues=gen.rowCount, random=False)
+    gen = gen.withColumn(
+        id_col, T.LongType(),
+        minValue=1, maxValue=gen.rowCount,
+        uniqueValues=gen.rowCount, random=False,
+        omit=not keep_id_col,
+    )
     return gen.withColumn(
         col_name, T.StringType(),
         baseColumn=id_col,
@@ -111,6 +120,8 @@ def fk_bigint(
     nullable: bool = False,
 ) -> dg.DataGenerator:
     """Random FK referencing a dim table that has sequential PK [1..ref_rows]."""
+    if ref_rows is None or ref_rows < 1:
+        ref_rows = 1
     kwargs: Dict[str, Any] = dict(minValue=1, maxValue=ref_rows, random=True)
     if nullable:
         kwargs["percentNulls"] = 0.02
@@ -123,6 +134,8 @@ def fk_int(
     ref_rows: int,
 ) -> dg.DataGenerator:
     """Random int FK referencing a dim with sequential int PK [1..ref_rows]."""
+    if ref_rows is None or ref_rows < 1:
+        ref_rows = 1
     return gen.withColumn(col_name, T.IntegerType(), minValue=1, maxValue=ref_rows,
                           random=True)
 
@@ -135,12 +148,18 @@ def fk_string(
     zero_pad: int = 6,
 ) -> dg.DataGenerator:
     """
-    String FK that matches the pk_string format used in the referenced dim.
-    Uses the same prefix + zero_pad convention.
+    String FK that matches the ``pk_string`` format used in the referenced dim.
+    Uses the same prefix + zero_pad convention. The internal counter column is
+    omitted from the output schema.
     """
+    if ref_rows is None or ref_rows < 1:
+        ref_rows = 1
     tmp_col = f"__{col_name}_fk_id"
-    gen = gen.withColumn(tmp_col, T.LongType(), minValue=1, maxValue=ref_rows,
-                         random=True)
+    gen = gen.withColumn(
+        tmp_col, T.LongType(),
+        minValue=1, maxValue=ref_rows,
+        random=True, omit=True,
+    )
     return gen.withColumn(
         col_name, T.StringType(),
         baseColumn=tmp_col,
@@ -148,23 +167,53 @@ def fk_string(
     )
 
 
+# ---------------------------------------------------------------------------
+# Calendar / fiscal-period helpers
+# ---------------------------------------------------------------------------
+
+# Maximum span the calendar dim is allowed to cover. 16 years * 12 = 192 periods.
+# `gen_calendar_fiscal_period_v` and `fiscal_year_period` both honour this cap so
+# fact FK values can never escape the dim's PK domain.
+FISCAL_START_YEAR: int = 2018
+FISCAL_MAX_YEARS: int = 16
+FISCAL_MAX_PERIODS: int = FISCAL_MAX_YEARS * 12
+
+
+def fiscal_period_values(
+    count: int,
+    start_year: int = FISCAL_START_YEAR,
+    n_years: int = FISCAL_MAX_YEARS,
+) -> List[int]:
+    """
+    Return the first ``count`` valid YYYYPP combos starting at ``start_year``.
+
+    The set is capped at ``n_years * 12`` so callers get a deterministic,
+    well-bounded domain that the calendar dim and every fact FK share.
+    """
+    all_vals = [yr * 100 + mo
+                for yr in range(start_year, start_year + n_years)
+                for mo in range(1, 13)]
+    if count is None or count < 1:
+        return all_vals
+    return all_vals[:min(count, len(all_vals))]
+
+
 def fiscal_year_period(
     gen: dg.DataGenerator,
     col_name: str,
-    start_year: int = 2018,
-    end_year: int = 2025,
+    count: int = FISCAL_MAX_PERIODS,
+    start_year: int = FISCAL_START_YEAR,
 ) -> dg.DataGenerator:
     """
-    Generate fiscal year-period numbers in the format YYYYPP (e.g. 202403).
-    Period is 01-12.
+    Random ``fiscal_year_period_nbr`` (YYYYPP) drawn from the same first-N list
+    that the calendar dim materialises. Pass ``count`` from
+    ``dim_rows['calendar_fiscal_period_v']`` to keep facts and dim aligned.
     """
-    # Build list of valid YYYYPP combos
-    valid_periods = [
-        int(f"{yr}{per:02d}")
-        for yr in range(start_year, end_year + 1)
-        for per in range(1, 13)
-    ]
-    return gen.withColumn(col_name, T.IntegerType(), values=valid_periods, random=True)
+    return gen.withColumn(
+        col_name, T.IntegerType(),
+        values=fiscal_period_values(count, start_year),
+        random=True,
+    )
 
 
 def _clamp_pct(pct: float) -> float:

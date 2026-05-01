@@ -166,8 +166,13 @@ def gen_segment_cost_center_hierarchy_dim_v(spark: SparkSession, rows: int, part
 # ---------------------------------------------------------------------------
 
 def gen_segment_profit_center_hierarchy(spark: SparkSession, rows: int, partitions: int) -> DataFrame:
+    """
+    NOTE: schema.yaml exposes ``__segment_profit_center_nbr_id`` (bigint) as a
+    visible column alongside the string PK ``segment_profit_center_nbr``, so we
+    pass ``keep_id_col=True`` to keep it in the output.
+    """
     gen = make_generator(spark, "segment_profit_center_hierarchy", rows, partitions)
-    gen = pk_string(gen, "segment_profit_center_nbr", "SPC", 6)
+    gen = pk_string(gen, "segment_profit_center_nbr", "SPC", 6, keep_id_col=True)
     gen = enum_col(gen, "profit_center_hierarchy_nm",
                    ["Segment NA", "Segment EMEA", "Segment GC", "Segment APLA"], weights=[30, 25, 25, 20])
     for lvl in range(1, 10):

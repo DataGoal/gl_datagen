@@ -9,8 +9,17 @@ All dimension bigint PKs are generated as sequential ranges [1..dim_rows].
 FK columns in facts use minValue=1, maxValue=dim_rows so every generated FK
 maps to a valid dimension PK — no join, no broadcast, scales to 25B rows.
 
-String PK dimensions (cost_center_dim_v → CC_000001, gl_account_dim → GL_000001)
+String PK dimensions (cost_center_dim_v -> CC_000001, gl_account_dim -> GL_000001)
 are replicated with the same prefix/pad formula so string FKs are equally valid.
+
+Calendar PKs are drawn from a single shared list (``fiscal_period_values``) used
+by both the calendar dim and every fact's ``fiscal_year_period_nbr`` FK.
+
+The non-FK dimensional columns on ``CIS_fact`` and
+``consolidated_balance_sheet_fact`` (e.g. ``profit_center_nbr``,
+``functional_area_cd``, ``division_nbr``) are also generated from the same
+domains as their parent dimensions so downstream aggregated tables can join
+on these natural keys without orphans.
 """
 from __future__ import annotations
 
@@ -32,6 +41,31 @@ from utils.datagen_helpers import (
     template_string,
     user_id_col,
 )
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _division_nbr_values(dim_rows: dict) -> list:
+    """
+    Return the deterministic list of division_nbr strings produced by
+    ``gen_division_text`` (``"01"`` ... ``"NN"`` for the first N divisions).
+    Used by fact tables so their string division_nbr columns join cleanly to
+    ``division_text``.
+    """
+    n = max(1, min(int(dim_rows.get("division_text", 20)), 99))
+    return [f"{i:02d}" for i in range(1, n + 1)]
+
+
+def _derive_fiscal_yr(gen, period_col: str = "fiscal_year_period_nbr",
+                     out_col: str = "fiscal_yr"):
+    """Derive ``fiscal_yr`` (YYYY) directly from ``fiscal_year_period_nbr``."""
+    return gen.withColumn(
+        out_col, T.IntegerType(),
+        baseColumn=period_col,
+        expr=f"cast({period_col} / 100 as int)",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -58,8 +92,12 @@ def gen_general_ledger_fact(
     # ---- PK -------------------------------------------------------------------
     gen = pk_bigint(gen, "general_ledger_fact_id")
 
-    # ---- FK → calendar_fiscal_period_v (int PK: YYYYPP values) ---------------
-    gen = fiscal_year_period(gen, "fiscal_year_period_nbr")
+    # ---- FK -> calendar_fiscal_period_v (int PK: YYYYPP values) --------------
+    # Use the SAME first-N list the dim materialises to guarantee FK validity.
+    gen = fiscal_year_period(
+        gen, "fiscal_year_period_nbr",
+        count=dim_rows.get("calendar_fiscal_period_v", 108),
+    )
 
     # ---- FK → profit_center (bigint PK) ---------------------------------------
     gen = fk_bigint(gen, "profit_center_id", dim_rows.get("profit_center", 5000))
@@ -153,29 +191,59 @@ def gen_CIS_fact(
     partitions: int,
     dim_rows: dict,
 ) -> DataFrame:
+    """
+    Consolidated Income Statement fact.
+
+    PK / integrity contract
+    -----------------------
+    * ``gl_account_id`` is the **PK** per ``schema.yaml`` -> generated as a
+      unique sequential bigint ``[1..rows]``.
+    * ``consolidated_income_statement_fact_id`` is a regular bigint reference,
+      not the PK.
+    * ``profit_center_id``           -> FK to ``profit_center.profit_center_id``
+    * ``profit_center_nbr``          -> matches ``profit_center.profit_center_nbr``
+    * ``functional_area_cd``         -> matches ``functional_area.functional_area_cd``
+    * ``division_nbr``               -> matches ``division_text.division_nbr``
+    * ``fiscal_year_period_nbr``     -> matches ``calendar_fiscal_period_v``
+    * ``fiscal_yr`` is **derived** from ``fiscal_year_period_nbr`` so they
+      remain consistent for downstream group-by aggregations.
+    """
     gen = make_generator(spark, "CIS_fact", rows, partitions)
 
-    gen = fk_bigint(gen, "gl_account_id", dim_rows.get("gl_account_dim", 2000))
-    gen = template_string(gen, "profit_center_nbr", r"PC_dddddd")
-    gen = fiscal_year_period(gen, "fiscal_year_period_nbr")
-    gen = gen.withColumn("fiscal_yr", T.IntegerType(), minValue=2018, maxValue=2025, random=True)
+    # ---- PK (per schema) -----------------------------------------------------
+    gen = pk_bigint(gen, "gl_account_id")
+
+    # ---- FKs to dim natural keys --------------------------------------------
+    gen = fk_string(gen, "profit_center_nbr", "PC",
+                    dim_rows.get("profit_center", 500), 6)
+    gen = fiscal_year_period(
+        gen, "fiscal_year_period_nbr",
+        count=dim_rows.get("calendar_fiscal_period_v", 108),
+    )
+    gen = _derive_fiscal_yr(gen)
+
     gen = decimal_amount(gen, "transaction_currency_amt", precision=18, scale=5)
-    gen = template_string(gen, "functional_area_cd", r"FA_dddd")
-    gen = fk_bigint(gen, "profit_center_id", dim_rows.get("profit_center", 5000))
-    gen = template_string(gen, "division_nbr", r"dd")
+    gen = fk_string(gen, "functional_area_cd", "FA",
+                    dim_rows.get("functional_area", 100), 4)
+    gen = fk_bigint(gen, "profit_center_id", dim_rows.get("profit_center", 500))
+    gen = enum_col(gen, "division_nbr", _division_nbr_values(dim_rows))
     gen = gen.withColumn("segment_nbr", T.IntegerType(),
                          values=[1000, 2000, 3000, 4000, 5000, 6000], random=True)
     gen = gen.withColumn("partner_segment_nbr", T.IntegerType(),
-                         values=[1000, 2000, 3000, 4000, 5000, 6000], random=True, percentNulls=0.3)
+                         values=[1000, 2000, 3000, 4000, 5000, 6000],
+                         random=True, percentNulls=0.3)
     gen = template_string(gen, "document_type_cd", r"rr")
-    gen = gen.withColumn("original_company_cd", T.IntegerType(), minValue=1000, maxValue=9999, random=True)
+    gen = gen.withColumn("original_company_cd", T.IntegerType(),
+                         minValue=1000, maxValue=9999, random=True)
     gen = decimal_amount(gen, "sign_adjusted_group_currency_amt", precision=18, scale=5)
     gen = decimal_amount(gen, "sign_adjusted_local_currency_amt", precision=18, scale=5)
     gen = decimal_amount(gen, "sign_adjusted_transaction_currency_amt", precision=18, scale=5)
     gen = decimal_amount(gen, "group_currency_amt", precision=18, scale=5)
     gen = decimal_amount(gen, "local_currency_amt", precision=18, scale=5)
     gen = decimal_amount(gen, "qty", min_val=0.0, max_val=50_000.0, precision=18, scale=5)
-    gen = pk_bigint(gen, "consolidated_income_statement_fact_id")
+    # Non-PK reference id (random bigint; not unique).
+    gen = gen.withColumn("consolidated_income_statement_fact_id", T.LongType(),
+                         minValue=1, maxValue=max(1, rows), random=True)
     gen = template_string(gen, "financial_statement_item_cd", r"rrrrddd")
     gen = enum_col(gen, "local_currency_cd",
                    ["USD", "EUR", "GBP", "JPY", "CNY", "CHF", "CAD"],
@@ -184,7 +252,8 @@ def gen_CIS_fact(
                    ["USD", "EUR", "GBP", "JPY", "CNY"],
                    weights=[35, 25, 15, 13, 12])
     gen = enum_col(gen, "version_nbr", ["001", "010", "BUD", "ACT", "FRC"], weights=[20, 20, 20, 20, 20])
-    gen = template_string(gen, "partner_profit_center_nbr", r"PC_dddddd", nullable_pct=0.4)
+    gen = fk_string(gen, "partner_profit_center_nbr", "PC",
+                    dim_rows.get("profit_center", 500), 6)
     gen = template_string(gen, "partner_unit_cd", r"rrd", nullable_pct=0.4)
     gen = gen.withColumn("consolidation_unit_cd", T.IntegerType(),
                          minValue=1000, maxValue=9999, random=True)
@@ -225,24 +294,43 @@ def gen_consolidated_balance_sheet_fact(
     spark: SparkSession,
     rows: int,
     partitions: int,
+    dim_rows: dict,
 ) -> DataFrame:
+    """
+    Consolidated Balance Sheet fact.
+
+    Integrity contract
+    ------------------
+    * ``consolidated_balance_sheet_fact_id`` is the unique PK.
+    * ``profit_center_nbr``        -> matches ``profit_center.profit_center_nbr``
+    * ``functional_area_cd``       -> matches ``functional_area.functional_area_cd``
+    * ``division_nbr``             -> matches ``division_text.division_nbr``
+    * ``fiscal_year_period_nbr``   -> matches ``calendar_fiscal_period_v``
+    * ``fiscal_yr`` is **derived** from ``fiscal_year_period_nbr``.
+    """
     gen = make_generator(spark, "consolidated_balance_sheet_fact", rows, partitions)
     gen = pk_bigint(gen, "consolidated_balance_sheet_fact_id")
     gen = template_string(gen, "financial_statement_item_cd", r"rrrrddd")
-    gen = template_string(gen, "profit_center_nbr", r"PC_dddddd")
-    gen = template_string(gen, "functional_area_cd", r"FA_dddd")
+    gen = fk_string(gen, "profit_center_nbr", "PC",
+                    dim_rows.get("profit_center", 500), 6)
+    gen = fk_string(gen, "functional_area_cd", "FA",
+                    dim_rows.get("functional_area", 100), 4)
     gen = enum_col(gen, "local_currency_cd",
                    ["USD", "EUR", "GBP", "JPY", "CNY"], weights=[35, 25, 15, 13, 12])
     gen = enum_col(gen, "transaction_currency_cd",
                    ["USD", "EUR", "GBP", "JPY", "CNY"], weights=[35, 25, 15, 13, 12])
     gen = enum_col(gen, "version_nbr", ["001", "010", "BUD", "ACT", "FRC"], weights=[20, 20, 20, 20, 20])
-    gen = template_string(gen, "division_nbr", r"dd")
-    gen = fiscal_year_period(gen, "fiscal_year_period_nbr")
+    gen = enum_col(gen, "division_nbr", _division_nbr_values(dim_rows))
+    gen = fiscal_year_period(
+        gen, "fiscal_year_period_nbr",
+        count=dim_rows.get("calendar_fiscal_period_v", 108),
+    )
     gen = template_string(gen, "partner_unit_cd", r"rrd", nullable_pct=0.4)
     gen = enum_col(gen, "posting_level_cd", ["00", "10", "20", "30"], weights=[50, 25, 15, 10])
     gen = template_string(gen, "document_type_cd", r"rr")
     gen = gen.withColumn("consolidation_unit_cd", T.IntegerType(), minValue=1000, maxValue=9999, random=True)
-    gen = template_string(gen, "partner_profit_center_nbr", r"PC_dddddd", nullable_pct=0.4)
+    gen = fk_string(gen, "partner_profit_center_nbr", "PC",
+                    dim_rows.get("profit_center", 500), 6)
     gen = gen.withColumn("trading_partner_nbr", T.IntegerType(), minValue=1000, maxValue=9999,
                          random=True, percentNulls=0.5)
     gen = template_string(gen, "region_summary_product_group_cd", r"rrd")
@@ -256,7 +344,7 @@ def gen_consolidated_balance_sheet_fact(
     gen = template_string(gen, "consolidated_segment_nm", r"rrrrrrr rrrrrr")
     gen = enum_col(gen, "consolidated_channel_nm",
                    ["Wholesale", "Direct", "Digital", "Franchise"], weights=[30, 30, 25, 15])
-    gen = gen.withColumn("fiscal_yr", T.IntegerType(), minValue=2018, maxValue=2025, random=True)
+    gen = _derive_fiscal_yr(gen)
     gen = enum_col(gen, "version_group_nm",
                    ["Actual", "Budget", "Forecast", "Rolling Forecast"], weights=[40, 20, 25, 15])
     gen = template_string(gen, "user_nm", r"rrrrrrrr.rrrrrrr")

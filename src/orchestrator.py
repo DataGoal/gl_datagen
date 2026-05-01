@@ -35,6 +35,7 @@ from typing import Dict, Any, Optional
 import yaml
 from pyspark.sql import SparkSession
 
+from utils.datagen_helpers import FISCAL_MAX_PERIODS
 from utils.schema_parser import SchemaParser
 from utils.spark_utils import configure_spark, ensure_catalog_schema, write_table
 
@@ -159,6 +160,170 @@ class DataGenOrchestrator:
         total = time.time() - total_start
         print(f"\n[Orchestrator] ✅ All tables generated in {total:.1f}s")
 
+    def verify_integrity(self, sample_rows: int = 1_000_000) -> Dict[str, Any]:
+        """
+        Run lightweight referential-integrity and PK-uniqueness checks against
+        the generated tables. Designed to run quickly on huge fact tables by
+        sampling a fixed number of rows from the central fact.
+
+        Returns a dict with per-check counts so callers can assert on them
+        from a notebook. Prints a human-readable summary.
+
+        Checks performed
+        ----------------
+        * PK uniqueness: ``general_ledger_fact_id``, dimension PKs.
+        * FK integrity: each declared FK on ``general_ledger_fact`` resolves to
+          a row in its referenced dim.
+        * Natural-key linkage: ``CIS_fact``/``consolidated_balance_sheet_fact``
+          ``profit_center_nbr`` and ``functional_area_cd`` resolve to rows in
+          their respective dim tables.
+        """
+        full = self.schema.full_name
+        spark = self.spark
+        results: Dict[str, Any] = {}
+
+        def _q(table: str) -> str:
+            return f"`{self.catalog}`.`{self.db_schema}`.`{table}`"
+
+        def _exists(table: str) -> bool:
+            try:
+                spark.table(_q(table))
+                return True
+            except Exception:
+                return False
+
+        # ---- PK uniqueness on the central fact and key dims ------------------
+        pk_checks = [
+            ("general_ledger_fact", "general_ledger_fact_id"),
+            ("CIS_fact", "gl_account_id"),
+            ("consolidated_balance_sheet_fact", "consolidated_balance_sheet_fact_id"),
+            ("profit_center", "profit_center_id"),
+            ("company_code", "company_id"),
+            ("functional_area", "functional_area_id"),
+            ("division_text", "division_id"),
+            ("finance_product_dim_v", "product_id"),
+            ("finance_customer_dim_v", "finance_customer_id"),
+            ("copa_attribution_dim", "copa_attribution_id"),
+            ("accounting_document_type", "accounting_document_type_id"),
+            ("calendar_fiscal_period_v", "fiscal_year_period_nbr"),
+            ("cost_center_dim_v", "cost_center_nbr"),
+            ("gl_account_dim", "gl_account_nbr"),
+        ]
+        results["pk_uniqueness"] = {}
+        for tbl, pk in pk_checks:
+            if not _exists(tbl):
+                continue
+            row = spark.sql(
+                f"SELECT COUNT(*) AS total, COUNT(DISTINCT `{pk}`) AS distinct "
+                f"FROM {_q(tbl)}"
+            ).first()
+            ok = row["total"] == row["distinct"] and row["total"] > 0
+            results["pk_uniqueness"][tbl] = {
+                "pk": pk, "rows": row["total"], "distinct": row["distinct"], "ok": ok,
+            }
+
+        # ---- FK integrity on a sample of general_ledger_fact -----------------
+        results["fk_integrity"] = {}
+        if _exists("general_ledger_fact"):
+            sample_view = "__gl_fact_sample"
+            spark.sql(
+                f"CREATE OR REPLACE TEMP VIEW {sample_view} AS "
+                f"SELECT * FROM {_q('general_ledger_fact')} LIMIT {int(sample_rows)}"
+            )
+
+            fk_checks = [
+                ("accounting_document_type_id", "accounting_document_type", "accounting_document_type_id"),
+                ("fiscal_year_period_nbr",       "calendar_fiscal_period_v", "fiscal_year_period_nbr"),
+                ("profit_center_id",             "profit_center",            "profit_center_id"),
+                ("division_id",                  "division_text",            "division_id"),
+                ("version_forecast_mapping_id",  "version_forecast_mapping", "version_forecast_mapping_id"),
+                ("functional_area_id",           "functional_area",          "functional_area_id"),
+                ("product_id",                   "finance_product_dim_v",    "product_id"),
+                ("customer_id",                  "finance_customer_dim_v",   "finance_customer_id"),
+                ("company_id",                   "company_code",             "company_id"),
+                ("copa_attribution_id",          "copa_attribution_dim",     "copa_attribution_id"),
+                ("cost_center_nbr",              "cost_center_dim_v",        "cost_center_nbr"),
+                ("geo_wholesale_value_business_id", "geo_wholesale_value_business_dim", "geo_wholesale_value_business_id"),
+                ("geo_marketplace_channel_id",   "geo_marketplace_channel_dim", "geo_marketplace_channel_id"),
+                ("gl_account_nbr",               "gl_account_dim",           "gl_account_nbr"),
+            ]
+            for fk_col, ref_tbl, ref_col in fk_checks:
+                if not _exists(ref_tbl):
+                    continue
+                row = spark.sql(
+                    f"""
+                    SELECT
+                      COUNT(*)               AS sampled,
+                      COUNT(DISTINCT f.{fk_col}) AS fk_distinct,
+                      SUM(CASE WHEN d.{ref_col} IS NULL THEN 1 ELSE 0 END) AS orphans
+                    FROM {sample_view} f
+                    LEFT JOIN {_q(ref_tbl)} d
+                      ON f.{fk_col} = d.{ref_col}
+                    """
+                ).first()
+                results["fk_integrity"][f"{fk_col}->{ref_tbl}.{ref_col}"] = {
+                    "sampled": row["sampled"],
+                    "fk_distinct_in_sample": row["fk_distinct"],
+                    "orphans": row["orphans"],
+                    "ok": (row["orphans"] or 0) == 0,
+                }
+
+        # ---- Natural-key joinability on the secondary facts ------------------
+        results["natural_key_integrity"] = {}
+        nk_checks = [
+            ("CIS_fact", "profit_center_nbr",    "profit_center",            "profit_center_nbr"),
+            ("CIS_fact", "functional_area_cd",   "functional_area",          "functional_area_cd"),
+            ("CIS_fact", "division_nbr",         "division_text",            "division_nbr"),
+            ("CIS_fact", "fiscal_year_period_nbr", "calendar_fiscal_period_v", "fiscal_year_period_nbr"),
+            ("consolidated_balance_sheet_fact", "profit_center_nbr",    "profit_center",   "profit_center_nbr"),
+            ("consolidated_balance_sheet_fact", "functional_area_cd",   "functional_area", "functional_area_cd"),
+            ("consolidated_balance_sheet_fact", "division_nbr",         "division_text",   "division_nbr"),
+            ("consolidated_balance_sheet_fact", "fiscal_year_period_nbr","calendar_fiscal_period_v", "fiscal_year_period_nbr"),
+        ]
+        for fact_tbl, fact_col, ref_tbl, ref_col in nk_checks:
+            if not (_exists(fact_tbl) and _exists(ref_tbl)):
+                continue
+            row = spark.sql(
+                f"""
+                SELECT
+                  COUNT(*) AS rows,
+                  SUM(CASE WHEN d.{ref_col} IS NULL AND f.{fact_col} IS NOT NULL THEN 1 ELSE 0 END) AS orphans
+                FROM (SELECT * FROM {_q(fact_tbl)} LIMIT {int(sample_rows)}) f
+                LEFT JOIN {_q(ref_tbl)} d
+                  ON f.{fact_col} = d.{ref_col}
+                """
+            ).first()
+            results["natural_key_integrity"][f"{fact_tbl}.{fact_col}->{ref_tbl}.{ref_col}"] = {
+                "rows": row["rows"], "orphans": row["orphans"], "ok": (row["orphans"] or 0) == 0,
+            }
+
+        self._print_integrity_report(results)
+        return results
+
+    @staticmethod
+    def _print_integrity_report(results: Dict[str, Any]) -> None:
+        print("\n" + "=" * 78)
+        print("[Orchestrator] Integrity report")
+        print("=" * 78)
+
+        print("\n  PK uniqueness")
+        for tbl, info in results.get("pk_uniqueness", {}).items():
+            mark = "OK" if info["ok"] else "FAIL"
+            print(f"    [{mark}] {tbl:<45} {info['pk']:<35} "
+                  f"rows={info['rows']:>14,}  distinct={info['distinct']:>14,}")
+
+        print("\n  FK integrity (general_ledger_fact sample)")
+        for label, info in results.get("fk_integrity", {}).items():
+            mark = "OK" if info["ok"] else "FAIL"
+            print(f"    [{mark}] {label:<70} sampled={info['sampled']:,}  orphans={info['orphans']}")
+
+        print("\n  Natural-key integrity (CIS_fact / consolidated_balance_sheet_fact)")
+        for label, info in results.get("natural_key_integrity", {}).items():
+            mark = "OK" if info["ok"] else "FAIL"
+            print(f"    [{mark}] {label:<80} rows={info['rows']:,}  orphans={info['orphans']}")
+
+        print("=" * 78)
+
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
@@ -175,12 +340,19 @@ class DataGenOrchestrator:
 
     def _build_dim_rows_map(self) -> Dict[str, int]:
         """
-        Build a mapping of {table_name: row_count} for all dimensions
-        referenced by the fact table. Used to set FK column ranges.
+        Build a mapping of ``{table_name: row_count}`` for all dimensions whose
+        PK domain is sampled by the fact tables. Used to set FK column ranges.
+
+        ``calendar_fiscal_period_v`` is capped at :data:`FISCAL_MAX_PERIODS`
+        because the calendar dim itself only materialises that many distinct
+        ``fiscal_year_period_nbr`` values regardless of the configured row count.
         """
+        cal_cfg = self._vol("calendar_fiscal_period_v")["rows"]
+        cal_actual = min(int(cal_cfg), FISCAL_MAX_PERIODS)
+
         return {
             "accounting_document_type": self._vol("accounting_document_type")["rows"],
-            "calendar_fiscal_period_v": self._vol("calendar_fiscal_period_v")["rows"],
+            "calendar_fiscal_period_v": cal_actual,
             "profit_center": self._vol("profit_center")["rows"],
             "division_text": self._vol("division_text")["rows"],
             "version_forecast_mapping": self._vol("version_forecast_mapping")["rows"],
@@ -211,6 +383,9 @@ class DataGenOrchestrator:
         steps = []
 
         # ---- Phase 1: Dimension tables ----------------------------------------
+        # Includes every dim referenced (formally OR via natural-key columns)
+        # by any fact table, so that running the orchestrator with a
+        # fact-only filter still produces a referentially-consistent dataset.
         dim_generators = [
             ("accounting_document_type",
              lambda r, p: gen_accounting_document_type(sp, r, p)),
@@ -240,6 +415,13 @@ class DataGenOrchestrator:
              lambda r, p: gen_geo_marketplace_channel_dim(sp, r, p)),
             ("gl_account_dim",
              lambda r, p: gen_gl_account_dim(sp, r, p)),
+            # Referenced by general_ledger_fact as zfsm_measure_id and the
+            # currency-exchange-rate ids. Materialised here so they exist
+            # whenever facts are generated.
+            ("gl_account_zfsm_measures_hierarchy_dim",
+             lambda r, p: gen_gl_account_zfsm_measures_hierarchy_dim(sp, r, p)),
+            ("finance_foreign_currency_exchange_rate",
+             lambda r, p: gen_finance_foreign_currency_exchange_rate(sp, r, p)),
         ]
 
         for tbl, fn in dim_generators:
@@ -267,7 +449,7 @@ class DataGenOrchestrator:
             r, p = cfg("consolidated_balance_sheet_fact")
             steps.append({
                 "table": "consolidated_balance_sheet_fact", "rows": r, "partitions": p,
-                "fn": lambda _r=r, _p=p: gen_consolidated_balance_sheet_fact(sp, _r, _p),
+                "fn": lambda _r=r, _p=p: gen_consolidated_balance_sheet_fact(sp, _r, _p, dim_rows),
             })
 
         # ---- Phase 3: Hierarchy & reference tables ----------------------------
@@ -293,10 +475,6 @@ class DataGenOrchestrator:
              lambda r, p: gen_gl_account_hierarchy(sp, r, p)),
             ("management_gl_account_hierarchy",
              lambda r, p: gen_management_gl_account_hierarchy(sp, r, p)),
-            ("gl_account_zfsm_measures_hierarchy_dim",
-             lambda r, p: gen_gl_account_zfsm_measures_hierarchy_dim(sp, r, p)),
-            ("finance_foreign_currency_exchange_rate",
-             lambda r, p: gen_finance_foreign_currency_exchange_rate(sp, r, p)),
             ("retail_global_store_profile_v",
              lambda r, p: gen_retail_global_store_profile_v(sp, r, p)),
         ]
