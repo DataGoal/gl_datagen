@@ -36,7 +36,7 @@ import sys
 import os
 
 # ── Point to the repo root (adjust if using a different mount or repo path) ──
-REPO_ROOT = "/Workspace/Repos/<your-username>/gl_datagen"  # ← update this path
+REPO_ROOT = "/Workspace/Users/balachandar.bhagyaraj@nike.com/gl_datagen"  # ← update this path
 sys.path.insert(0, REPO_ROOT)
 os.chdir(REPO_ROOT)
 
