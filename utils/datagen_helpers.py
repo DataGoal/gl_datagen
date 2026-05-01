@@ -167,6 +167,17 @@ def fiscal_year_period(
     return gen.withColumn(col_name, T.IntegerType(), values=valid_periods, random=True)
 
 
+def _clamp_pct(pct: float) -> float:
+    """Clamp a null-probability into [0.0, 1.0]; dbldatagen rejects values outside that range."""
+    if pct is None:
+        return 0.0
+    if pct < 0.0:
+        return 0.0
+    if pct > 1.0:
+        return 1.0
+    return float(pct)
+
+
 def enum_col(
     gen: dg.DataGenerator,
     col_name: str,
@@ -178,6 +189,7 @@ def enum_col(
     kwargs: Dict[str, Any] = dict(values=values, random=True)
     if weights:
         kwargs["weights"] = weights
+    nullable_pct = _clamp_pct(nullable_pct)
     if nullable_pct > 0:
         kwargs["percentNulls"] = nullable_pct
     return gen.withColumn(col_name, T.StringType(), **kwargs)
@@ -195,6 +207,7 @@ def template_string(
     e.g. 'r_ddd' → 'A_143'
     """
     kwargs: Dict[str, Any] = dict(template=template, random=True)
+    nullable_pct = _clamp_pct(nullable_pct)
     if nullable_pct > 0:
         kwargs["percentNulls"] = nullable_pct
     return gen.withColumn(col_name, T.StringType(), **kwargs)
@@ -211,6 +224,7 @@ def decimal_amount(
 ) -> dg.DataGenerator:
     """Random decimal amount column."""
     kwargs: Dict[str, Any] = dict(minValue=min_val, maxValue=max_val, random=True)
+    nullable_pct = _clamp_pct(nullable_pct)
     if nullable_pct > 0:
         kwargs["percentNulls"] = nullable_pct
     return gen.withColumn(col_name, T.DecimalType(precision, scale), **kwargs)
@@ -225,6 +239,7 @@ def date_col(
 ) -> dg.DataGenerator:
     """Random date column within a range."""
     kwargs: Dict[str, Any] = dict(begin=begin, end=end, random=True)
+    nullable_pct = _clamp_pct(nullable_pct)
     if nullable_pct > 0:
         kwargs["percentNulls"] = nullable_pct
     return gen.withColumn(col_name, T.DateType(), **kwargs)
