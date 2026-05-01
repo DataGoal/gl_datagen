@@ -1,0 +1,139 @@
+# =============================================================================
+# Generation Configuration — Domain Values & Column Hints
+# =============================================================================
+# Edit value lists here without touching any Python code.
+# All string columns with a finite domain should be specified below.
+# =============================================================================
+
+domains:
+  # ---- Currencies -----------------------------------------------------------
+  currency_cd:
+    values: [USD, EUR, GBP, JPY, CNY, CHF, CAD, AUD, KRW, BRL, MXN, INR, SEK, NOK, DKK]
+    weights: [40, 20, 8, 5, 5, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1]
+
+  # ---- Language codes -------------------------------------------------------
+  language_cd:
+    values: [EN, DE, FR, ES, ZH, JA, KO, PT, IT, NL]
+    weights: [50, 15, 10, 8, 5, 3, 2, 3, 2, 2]
+
+  # ---- Active indicator -----------------------------------------------------
+  active_ind:
+    values: [Y, N]
+    weights: [90, 10]
+
+  # ---- Yes/No indicators (generic) -----------------------------------------
+  yn_ind:
+    values: [Y, N]
+    weights: [80, 20]
+
+  # ---- Document types -------------------------------------------------------
+  accounting_document_type_cd:
+    values: [SA, DA, KA, WA, RV, DR, DG, KG, AB, SB, RE, KE, ZA, ZR, ZD]
+
+  # ---- GL ledger codes ------------------------------------------------------
+  ledger_cd:
+    values: [0L, 1L, 2L, A1, B1, C1, L1, 2F]
+    weights: [35, 20, 15, 10, 8, 5, 4, 3]
+
+  # ---- Version / forecast ---------------------------------------------------
+  version_group_nm:
+    values: [Actual, Budget, Forecast, Rolling Forecast, Plan, Latest Estimate]
+    weights: [40, 20, 20, 10, 7, 3]
+
+  # ---- Fiscal year range ----------------------------------------------------
+  fiscal_year:
+    min: 2018
+    max: 2025
+
+  # ---- Amount ranges --------------------------------------------------------
+  amounts:
+    large_currency:
+      min: -5_000_000.0
+      max: 10_000_000.0
+    standard_currency:
+      min: -500_000.0
+      max: 2_000_000.0
+    quantity:
+      min: 0.0
+      max: 100_000.0
+    exchange_rate:
+      min: 0.0001
+      max: 200.0
+
+  # ---- Geography / region ---------------------------------------------------
+  region:
+    values: [North America, EMEA, Greater China, APLA, Europe, Asia Pacific]
+    weights: [30, 25, 15, 10, 12, 8]
+
+  country_cd:
+    values: [US, DE, GB, FR, CN, JP, KR, AU, CA, BR, MX, IN, NL, IT, ES]
+    weights: [30, 10, 8, 8, 8, 5, 3, 3, 5, 3, 3, 3, 3, 3, 3]
+
+  # ---- Brands ---------------------------------------------------------------
+  brand_nm:
+    values: [Nike, Jordan, Converse, Hurley, Nike Golf]
+    weights: [65, 20, 10, 3, 2]
+
+  # ---- Gender / age ---------------------------------------------------------
+  gender_desc:
+    values: [Men's, Women's, Kids', Unisex, Grade School, Toddler]
+    weights: [35, 30, 15, 10, 7, 3]
+
+  age_desc:
+    values: [Adult, Kids, Infant, Toddler, Youth]
+    weights: [55, 20, 8, 8, 9]
+
+  # ---- Record type ----------------------------------------------------------
+  record_type_cd:
+    values: [0, 1, 2, 3, 4]
+    weights: [50, 20, 15, 10, 5]
+
+  # ---- Physical source ------------------------------------------------------
+  physical_source_cd:
+    values: [SAP_ECC, SAP_S4, BW, HANA, LEGACY, ANAPLAN]
+    weights: [35, 30, 15, 10, 5, 5]
+
+  # ---- Posting level --------------------------------------------------------
+  posting_level_cd:
+    values: ["00", "10", "20", "30"]
+    weights: [50, 25, 15, 10]
+
+  # ---- Chart of accounts ----------------------------------------------------
+  chart_of_accounts_cd:
+    values: [GLBL, US01, EU01, AP01, CA01]
+    weights: [40, 20, 20, 10, 10]
+
+  # ---- Sales order types ----------------------------------------------------
+  sales_order_type_cd:
+    values: [OR, ZOR, ZDR, RE, ZRE, CS, ZCS, FD, ZFD]
+    weights: [30, 20, 10, 10, 8, 7, 5, 5, 5]
+
+  # ---- Distribution methods ------------------------------------------------
+  distribution_method_cd:
+    values: [WHK, DTC, DIGITAL, WHL, MKT, OWNED]
+    weights: [25, 20, 20, 15, 10, 10]
+
+  # ---- Channel / marketplace -----------------------------------------------
+  channel_desc:
+    values: [Wholesale, Direct to Consumer, Digital, Own Stores, Partner, Factory Outlet]
+    weights: [30, 25, 20, 10, 10, 5]
+
+  # ---- ETM indicator --------------------------------------------------------
+  etm_ind:
+    values: [0, 1]
+    weights: [85, 15]
+
+  # ---- Controlling area -----------------------------------------------------
+  controlling_area_cd:
+    values: [NA01, EU01, AP01, CA01, LA01, GC01]
+    weights: [30, 25, 15, 10, 10, 10]
+
+  # ---- Segment numbers (consolidation) -------------------------------------
+  segment_nbr:
+    values: [1000, 2000, 3000, 4000, 5000, 6000, 7000]
+    weights: [20, 20, 15, 15, 12, 10, 8]
+
+  # ---- Version numbers ------------------------------------------------------
+  version_nbr:
+    values: ["001", "002", "003", "010", "020", "100", "200", BUD, ACT, FRC]
+    weights: [15, 15, 10, 10, 10, 10, 10, 8, 7, 5]
