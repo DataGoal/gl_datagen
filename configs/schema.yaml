@@ -1212,15 +1212,23 @@ tables:
         data_type: bigint
       - name: copa_attribution_id
         data_type: bigint
+      - name: __cost_center_nbr_fk_id
+        data_type: bigint
       - name: cost_center_nbr
         data_type: string
       - name: geo_wholesale_value_business_id
         data_type: bigint
       - name: geo_marketplace_channel_id
         data_type: bigint
+      - name: __gl_account_nbr_fk_id
+        data_type: bigint
       - name: gl_account_nbr
         data_type: string
       - name: zfsm_measure_id
+        data_type: bigint
+      - name: etm_foreign_currency_exchange_rate_id
+        data_type: bigint
+      - name: gaap_foreign_currency_exchange_rate_id
         data_type: bigint
       - name: company_currency_amt
         data_type: decimal(28,5)
@@ -1230,10 +1238,6 @@ tables:
         data_type: decimal(28,5)
       - name: etm_ind
         data_type: int
-      - name: etm_foreign_currency_exchange_rate_id
-        data_type: bigint
-      - name: gaap_foreign_currency_exchange_rate_id
-        data_type: bigint
       - name: sales_qty
         data_type: decimal(28,5)
       - name: returns_qty
@@ -1249,6 +1253,14 @@ tables:
       - name: company_currency_cd
         data_type: string
       - name: transaction_currency_cd
+        data_type: string
+      - name: Functional_Area_cd
+        data_type: string
+      - name: accounting_document_type_cd
+        data_type: string
+      - name: profit_center_nbr
+        data_type: string
+      - name: company_cd
         data_type: string
     relationships:
       - column: accounting_document_type_id

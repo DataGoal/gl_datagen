@@ -146,11 +146,15 @@ def fk_string(
     prefix: str,
     ref_rows: int,
     zero_pad: int = 6,
+    keep_id_col: bool = False,
 ) -> dg.DataGenerator:
     """
     String FK that matches the ``pk_string`` format used in the referenced dim.
-    Uses the same prefix + zero_pad convention. The internal counter column is
-    omitted from the output schema.
+    Uses the same prefix + zero_pad convention.
+
+    By default the internal bigint counter column ``__{col_name}_fk_id`` is
+    omitted from the output. Set ``keep_id_col=True`` to expose it as a real
+    table column (used when the DDL explicitly declares the id column).
     """
     if ref_rows is None or ref_rows < 1:
         ref_rows = 1
@@ -158,7 +162,7 @@ def fk_string(
     gen = gen.withColumn(
         tmp_col, T.LongType(),
         minValue=1, maxValue=ref_rows,
-        random=True, omit=True,
+        random=True, omit=not keep_id_col,
     )
     return gen.withColumn(
         col_name, T.StringType(),

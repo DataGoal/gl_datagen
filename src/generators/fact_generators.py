@@ -89,61 +89,72 @@ def gen_general_ledger_fact(
     """
     gen = make_generator(spark, "general_ledger_fact", rows, partitions)
 
-    # ---- PK -------------------------------------------------------------------
+    # ---- PK ------------------------------------------------------------------
     gen = pk_bigint(gen, "general_ledger_fact_id")
 
-    # ---- FK -> calendar_fiscal_period_v (int PK: YYYYPP values) --------------
+    # ---- FK -> calendar_fiscal_period_v (int PK: YYYYPP values) -------------
     # Use the SAME first-N list the dim materialises to guarantee FK validity.
     gen = fiscal_year_period(
         gen, "fiscal_year_period_nbr",
         count=dim_rows.get("calendar_fiscal_period_v", 108),
     )
 
-    # ---- FK → profit_center (bigint PK) ---------------------------------------
-    gen = fk_bigint(gen, "profit_center_id", dim_rows.get("profit_center", 5000))
+    # ---- FK -> profit_center (bigint PK) ------------------------------------
+    gen = fk_bigint(gen, "profit_center_id", dim_rows.get("profit_center", 500))
 
-    # ---- FK → division_text (bigint PK) ----------------------------------------
+    # ---- FK -> division_text (bigint PK) ------------------------------------
     gen = fk_bigint(gen, "division_id", dim_rows.get("division_text", 20))
 
-    # ---- FK → version_forecast_mapping (bigint PK) ----------------------------
-    gen = fk_bigint(gen, "version_forecast_mapping_id", dim_rows.get("version_forecast_mapping", 30))
+    # ---- FK -> version_forecast_mapping (bigint PK) -------------------------
+    gen = fk_bigint(gen, "version_forecast_mapping_id",
+                    dim_rows.get("version_forecast_mapping", 30))
 
-    # ---- FK → functional_area (bigint PK) -------------------------------------
+    # ---- FK -> functional_area (bigint PK) ----------------------------------
     gen = fk_bigint(gen, "functional_area_id", dim_rows.get("functional_area", 100))
 
-    # ---- FK → accounting_document_type (bigint PK) ----------------------------
-    gen = fk_bigint(gen, "accounting_document_type_id", dim_rows.get("accounting_document_type", 50))
+    # ---- FK -> accounting_document_type (bigint PK) -------------------------
+    gen = fk_bigint(gen, "accounting_document_type_id",
+                    dim_rows.get("accounting_document_type", 50))
 
-    # ---- FK → finance_product_dim_v (bigint PK) --------------------------------
-    gen = fk_bigint(gen, "product_id", dim_rows.get("finance_product_dim_v", 50000))
+    # ---- FK -> finance_product_dim_v (bigint PK) ----------------------------
+    gen = fk_bigint(gen, "product_id", dim_rows.get("finance_product_dim_v", 500))
 
-    # ---- FK → finance_customer_dim_v (finance_customer_id bigint) --------------
-    gen = fk_bigint(gen, "customer_id", dim_rows.get("finance_customer_dim_v", 10000))
+    # ---- FK -> finance_customer_dim_v (finance_customer_id bigint) ----------
+    gen = fk_bigint(gen, "customer_id", dim_rows.get("finance_customer_dim_v", 100))
 
-    # ---- FK → company_code (company_id bigint) --------------------------------
+    # ---- FK -> company_code (company_id bigint) ------------------------------
     gen = fk_bigint(gen, "company_id", dim_rows.get("company_code", 50))
 
-    # ---- FK → copa_attribution_dim (bigint PK) --------------------------------
+    # ---- FK -> copa_attribution_dim (bigint PK) -----------------------------
     gen = fk_bigint(gen, "copa_attribution_id", dim_rows.get("copa_attribution_dim", 500))
 
-    # ---- FK → cost_center_dim_v (cost_center_nbr string: CC_000001) -----------
-    gen = fk_string(gen, "cost_center_nbr", "CC", dim_rows.get("cost_center_dim_v", 5000), 6)
+    # ---- FK -> cost_center_dim_v (CC_000001 string PK) ----------------------
+    # keep_id_col=True: DDL now exposes __cost_center_nbr_fk_id as a real column.
+    gen = fk_string(gen, "cost_center_nbr", "CC",
+                    dim_rows.get("cost_center_dim_v", 500), 6,
+                    keep_id_col=True)
 
-    # ---- FK → geo_wholesale_value_business_dim (bigint PK) --------------------
+    # ---- FK -> geo_wholesale_value_business_dim (bigint PK) -----------------
     gen = fk_bigint(gen, "geo_wholesale_value_business_id",
                     dim_rows.get("geo_wholesale_value_business_dim", 200))
 
-    # ---- FK → geo_marketplace_channel_dim (bigint PK) -------------------------
+    # ---- FK -> geo_marketplace_channel_dim (bigint PK) ----------------------
     gen = fk_bigint(gen, "geo_marketplace_channel_id",
                     dim_rows.get("geo_marketplace_channel_dim", 100))
 
-    # ---- FK → gl_account_dim (gl_account_nbr string: GL_000001) ---------------
-    gen = fk_string(gen, "gl_account_nbr", "GL", dim_rows.get("gl_account_dim", 2000), 6)
+    # ---- FK -> gl_account_dim (GL_000001 string PK) -------------------------
+    # keep_id_col=True: DDL now exposes __gl_account_nbr_fk_id as a real column.
+    gen = fk_string(gen, "gl_account_nbr", "GL",
+                    dim_rows.get("gl_account_dim", 200), 6,
+                    keep_id_col=True)
 
-    # ---- Non-FK reference columns --------------------------------------------
+    # ---- Non-FK reference: zfsm + fx-rate ids --------------------------------
     gen = gen.withColumn("zfsm_measure_id", T.LongType(),
-                         minValue=1, maxValue=dim_rows.get("gl_account_zfsm_measures_hierarchy_dim", 1000),
+                         minValue=1,
+                         maxValue=dim_rows.get("gl_account_zfsm_measures_hierarchy_dim", 100),
                          random=True)
+
+    # DDL order: etm/gaap fx-rate ids BEFORE the currency amounts
     gen = gen.withColumn("etm_foreign_currency_exchange_rate_id", T.LongType(),
                          minValue=1,
                          maxValue=dim_rows.get("finance_foreign_currency_exchange_rate", 200),
@@ -154,20 +165,26 @@ def gen_general_ledger_fact(
                          random=True)
 
     # ---- Measure columns (amounts) -------------------------------------------
-    gen = decimal_amount(gen, "company_currency_amt", min_val=-2_000_000.0, max_val=5_000_000.0,
-                         precision=28, scale=5)
-    gen = decimal_amount(gen, "transaction_currency_amt", min_val=-2_000_000.0, max_val=5_000_000.0,
-                         precision=28, scale=5)
-    gen = decimal_amount(gen, "performance_management_currency_amt", min_val=-2_000_000.0, max_val=5_000_000.0,
-                         precision=28, scale=5)
+    gen = decimal_amount(gen, "company_currency_amt",
+                         min_val=-2_000_000.0, max_val=5_000_000.0, precision=28, scale=5)
+    gen = decimal_amount(gen, "transaction_currency_amt",
+                         min_val=-2_000_000.0, max_val=5_000_000.0, precision=28, scale=5)
+    gen = decimal_amount(gen, "performance_management_currency_amt",
+                         min_val=-2_000_000.0, max_val=5_000_000.0, precision=28, scale=5)
+
+    # DDL order: etm_ind AFTER the currency amounts
     gen = gen.withColumn("etm_ind", T.IntegerType(), values=[0, 1], weights=[85, 15], random=True)
-    gen = decimal_amount(gen, "sales_qty", min_val=0.0, max_val=100_000.0, precision=28, scale=5)
-    gen = decimal_amount(gen, "returns_qty", min_val=0.0, max_val=10_000.0, precision=28, scale=5)
+
+    gen = decimal_amount(gen, "sales_qty",
+                         min_val=0.0, max_val=100_000.0, precision=28, scale=5)
+    gen = decimal_amount(gen, "returns_qty",
+                         min_val=0.0, max_val=10_000.0, precision=28, scale=5)
 
     # ---- Indicator flags -----------------------------------------------------
     gen = enum_col(gen, "general_ledger_fact_ind", ["Y", "N"], weights=[90, 10])
     gen = enum_col(gen, "cis_delta_ind", ["Y", "N", ""], weights=[10, 5, 85])
-    gen = enum_col(gen, "general_ledger_ocogs_allocation_fact_ind", ["Y", "N", ""], weights=[15, 5, 80])
+    gen = enum_col(gen, "general_ledger_ocogs_allocation_fact_ind",
+                   ["Y", "N", ""], weights=[15, 5, 80])
     gen = enum_col(gen, "anaplan_corporate_ind", ["Y", "N", ""], weights=[20, 10, 70])
 
     # ---- Currency codes -------------------------------------------------------
@@ -177,6 +194,31 @@ def gen_general_ledger_fact(
     gen = enum_col(gen, "transaction_currency_cd",
                    ["USD", "EUR", "GBP", "JPY", "CNY", "CHF", "CAD", "AUD", "KRW", "BRL"],
                    weights=[30, 18, 8, 7, 8, 4, 6, 5, 7, 7])
+
+    # ---- Denormalised dimension attributes (new) -----------------------------
+    # These replicate natural keys from their source dims so aggregated tables
+    # can GROUP BY or JOIN on them without looking up the dim each time.
+
+    # Functional_Area_cd: matches functional_area.functional_area_cd (FA_0001..FA_NNNN)
+    gen = fk_string(gen, "Functional_Area_cd", "FA",
+                    dim_rows.get("functional_area", 100), 4)
+
+    # accounting_document_type_cd: same value domain as the dim
+    gen = enum_col(gen, "accounting_document_type_cd",
+                   ["SA", "DA", "KA", "WA", "RV", "DR", "DG", "KG", "AB", "SB",
+                    "RE", "KE", "ZA", "ZR", "ZD", "RA", "RF", "RD", "RS", "RT"])
+
+    # profit_center_nbr: matches profit_center.profit_center_nbr (PC_000001..PC_NNNNNN)
+    gen = fk_string(gen, "profit_center_nbr", "PC",
+                    dim_rows.get("profit_center", 500), 6)
+
+    # company_cd: derived from company_id so every fact row for the same
+    # company gets the same 4-digit code, matching the dim's dddd template format.
+    gen = gen.withColumn(
+        "company_cd", T.StringType(),
+        baseColumn="company_id",
+        expr="lpad(string(company_id), 4, '0')",
+    )
 
     return gen.build()
 
