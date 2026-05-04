@@ -18,135 +18,135 @@ environment:
 # Primary fact table — this is the anchor for all scale-out tests
 # ---------------------------------------------------------------------------
 general_ledger_fact:
-  rows: 25_000_000             # ← change to 25_000_000_000 for 25B rows
-  partitions: 400                # tune to (target_rows / ~250k per partition)
+  rows: 4_000_000_000             # ← change to 25_000_000_000 for 25B rows
+  partitions: 2000                # tune to (target_rows / ~250k per partition)
   shuffle_partitions: 400        # spark.sql.shuffle.partitions
 
 # ---------------------------------------------------------------------------
 # Dimension tables — sizes are independent of the fact table
 # ---------------------------------------------------------------------------
 accounting_document_type:
-  rows: 50
+  rows: 5000
   partitions: 1
 
 calendar_fiscal_period_v:
-  rows: 300                      # ~25 fiscal years × 12 periods
+  rows: 3000                      # ~25 fiscal years × 12 periods
   partitions: 1
 
 profit_center:
-  rows: 500
+  rows: 5000
   partitions: 4
 
 division_text:
-  rows: 20
+  rows: 200
   partitions: 1
 
 version_forecast_mapping:
-  rows: 30
+  rows: 300
   partitions: 1
 
 functional_area:
-  rows: 100
+  rows: 1000
   partitions: 1
 
 finance_product_dim_v:
-  rows: 500
+  rows: 5000
   partitions: 8
 
 finance_customer_dim_v:
-  rows: 100
+  rows: 1000
   partitions: 4
 
 company_code:
-  rows: 50
+  rows: 500
   partitions: 1
 
 copa_attribution_dim:
-  rows: 500
+  rows: 5000
   partitions: 2
 
 cost_center_dim_v:
-  rows: 500
+  rows: 5000
   partitions: 4
 
 geo_wholesale_value_business_dim:
-  rows: 200
+  rows: 2000
   partitions: 1
 
 geo_marketplace_channel_dim:
-  rows: 100
+  rows: 1000
   partitions: 1
 
 gl_account_dim:
-  rows: 200
+  rows: 2000
   partitions: 2
 
 # ---------------------------------------------------------------------------
 # Secondary fact / view tables
 # ---------------------------------------------------------------------------
 CIS_fact:
-  rows: 100_000
+  rows: 1_000_000_000
   partitions: 100
 
 consolidated_balance_sheet_fact:
-  rows: 500_000
+  rows: 500_000_000
   partitions: 50
 
 # ---------------------------------------------------------------------------
 # Hierarchy / reference tables (smaller, fixed size)
 # ---------------------------------------------------------------------------
 atscale_geo_security:
-  rows: 20
+  rows: 200
   partitions: 1
 
 consolidation_functional_area_hierarchy:
-  rows: 500
+  rows: 5000
   partitions: 2
 
 consolidation_segment_hierarchy_dim:
-  rows: 300
+  rows: 3000
   partitions: 1
 
 segment_cost_center_hierarchy_dim_v:
-  rows: 100
+  rows: 1000
   partitions: 2
 
 segment_profit_center_hierarchy:
-  rows: 200
+  rows: 2000
   partitions: 2
 
 DisChannel_cost_center_hierarchy_dim_v:
-  rows: 100
+  rows: 1000
   partitions: 2
 
 DisChannel_profit_center_hierarchy:
-  rows: 200
+  rows: 2000
   partitions: 2
 
 PartDisChannel_profit_center_hierarchy:
-  rows: 200
+  rows: 2000
   partitions: 2
 
 division_text_dim_v:
-  rows: 20
-  partitions: 1
-
-gl_account_hierarchy:
-  rows: 500
-  partitions: 4
-
-management_gl_account_hierarchy:
-  rows: 500
-  partitions: 4
-
-gl_account_zfsm_measures_hierarchy_dim:
-  rows: 100
-  partitions: 2
-
-finance_foreign_currency_exchange_rate:
   rows: 200
   partitions: 1
 
+gl_account_hierarchy:
+  rows: 5000
+  partitions: 4
+
+management_gl_account_hierarchy:
+  rows: 5000
+  partitions: 4
+
+gl_account_zfsm_measures_hierarchy_dim:
+  rows: 1000  
+  partitions: 2
+
+finance_foreign_currency_exchange_rate:
+  rows: 2000
+  partitions: 1
+
 retail_global_store_profile_v:
-  rows: 500
+  rows: 5000
   partitions: 4
