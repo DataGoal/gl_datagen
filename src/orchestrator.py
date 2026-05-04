@@ -40,6 +40,7 @@ from utils.schema_parser import SchemaParser
 from utils.spark_utils import configure_spark, ensure_catalog_schema, write_table
 
 from src.generators.dimension_generators import (
+    DIVISION_TEXT_MAX_ROWS,
     gen_accounting_document_type,
     gen_calendar_fiscal_period_v,
     gen_profit_center,
@@ -346,15 +347,23 @@ class DataGenOrchestrator:
         ``calendar_fiscal_period_v`` is capped at :data:`FISCAL_MAX_PERIODS`
         because the calendar dim itself only materialises that many distinct
         ``fiscal_year_period_nbr`` values regardless of the configured row count.
+
+        ``division_text`` is capped at :data:`DIVISION_TEXT_MAX_ROWS` (20)
+        because ``gen_division_text`` uses a hardcoded list of exactly 20
+        divisions; any YAML row count above 20 would cause ``division_id`` FK
+        values in the fact table to reference non-existent dim rows.
         """
         cal_cfg = self._vol("calendar_fiscal_period_v")["rows"]
         cal_actual = min(int(cal_cfg), FISCAL_MAX_PERIODS)
+
+        div_cfg = self._vol("division_text")["rows"]
+        div_actual = min(int(div_cfg), DIVISION_TEXT_MAX_ROWS)
 
         return {
             "accounting_document_type": self._vol("accounting_document_type")["rows"],
             "calendar_fiscal_period_v": cal_actual,
             "profit_center": self._vol("profit_center")["rows"],
-            "division_text": self._vol("division_text")["rows"],
+            "division_text": div_actual,
             "version_forecast_mapping": self._vol("version_forecast_mapping")["rows"],
             "functional_area": self._vol("functional_area")["rows"],
             "finance_product_dim_v": self._vol("finance_product_dim_v")["rows"],

@@ -211,6 +211,15 @@ def gen_profit_center(spark: SparkSession, rows: int, partitions: int) -> DataFr
 # division_text
 # ---------------------------------------------------------------------------
 
+DIVISION_TEXT_MAX_ROWS: int = 20
+"""
+Number of divisions in the hardcoded ``divisions`` list inside
+``gen_division_text``.  The orchestrator and fact generators must cap the
+``division_text`` FK domain at this value so generated IDs never exceed the
+rows the dim table actually contains.
+"""
+
+
 def gen_division_text(spark: SparkSession, rows: int, partitions: int) -> DataFrame:
     divisions = [
         (1, "01", "Footwear", "Core", "Y"),

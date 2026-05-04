@@ -38,7 +38,7 @@ profit_center:
   partitions: 4
 
 division_text:
-  rows: 200
+  rows: 20                        # hardcoded list of 20 divisions; cap enforced in orchestrator
   partitions: 1
 
 version_forecast_mapping:
