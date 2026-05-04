@@ -41,8 +41,8 @@ sys.path.insert(0, REPO_ROOT)
 os.chdir(REPO_ROOT)
 
 # ── Databricks Widgets ────────────────────────────────────────────────────────
-dbutils.widgets.text("FACT_ROWS",        "4_000_000_000",   "Fact Table Row Count")
-dbutils.widgets.text("FACT_PARTITIONS",  "2000",        "Fact Table Partitions")
+dbutils.widgets.text("FACT_ROWS",        "2_000_000_000",   "Fact Table Row Count")
+dbutils.widgets.text("FACT_PARTITIONS",  "200",        "Fact Table Partitions")
 dbutils.widgets.text("WRITE_MODE",       "overwrite",  "Write Mode (overwrite|append)")
 dbutils.widgets.text("TABLES_TO_RUN",    "",           "Tables to run (comma-sep, blank=all)")
 
