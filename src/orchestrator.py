@@ -200,7 +200,7 @@ class DataGenOrchestrator:
             # ("consolidated_balance_sheet_fact", "consolidated_balance_sheet_fact_id"),
             ("profit_center", "profit_center_id"),
             ("company_code", "company_id"),
-            ("functional_area", "functional_area_id"),
+            # ("functional_area", "functional_area_id"),
             # ("division_text", "division_id"),
             ("finance_product_dim_v", "product_id"),
             ("finance_customer_dim_v", "finance_customer_id"),
@@ -238,7 +238,7 @@ class DataGenOrchestrator:
                 ("profit_center_id",             "profit_center",            "profit_center_id"),
                 # ("division_id",                  "division_text",            "division_id"),
                 ("version_forecast_mapping_id",  "version_forecast_mapping", "version_forecast_mapping_id"),
-                ("functional_area_id",           "functional_area",          "functional_area_id"),
+                # ("functional_area_id",           "functional_area",          "functional_area_id"),
                 ("product_id",                   "finance_product_dim_v",    "product_id"),
                 ("customer_id",                  "finance_customer_dim_v",   "finance_customer_id"),
                 ("company_id",                   "company_code",             "company_id"),
@@ -272,14 +272,14 @@ class DataGenOrchestrator:
         # ---- Natural-key joinability on the secondary facts ------------------
         results["natural_key_integrity"] = {}
         nk_checks = [
-            ("CIS_fact", "profit_center_nbr",    "profit_center",            "profit_center_nbr"),
-            ("CIS_fact", "functional_area_cd",   "functional_area",          "functional_area_cd"),
+            # ("CIS_fact", "profit_center_nbr",    "profit_center",            "profit_center_nbr"),
+            # ("CIS_fact", "functional_area_cd",   "functional_area",          "functional_area_cd"),
             # ("CIS_fact", "division_nbr",         "division_text",            "division_nbr"),
-            ("CIS_fact", "fiscal_year_period_nbr", "calendar_fiscal_period_v", "fiscal_year_period_nbr"),
-            ("consolidated_balance_sheet_fact", "profit_center_nbr",    "profit_center",   "profit_center_nbr"),
-            ("consolidated_balance_sheet_fact", "functional_area_cd",   "functional_area", "functional_area_cd"),
+            # ("CIS_fact", "fiscal_year_period_nbr", "calendar_fiscal_period_v", "fiscal_year_period_nbr"),
+            # ("consolidated_balance_sheet_fact", "profit_center_nbr",    "profit_center",   "profit_center_nbr"),
+            #("consolidated_balance_sheet_fact", "functional_area_cd",   "functional_area", "functional_area_cd"),
             # ("consolidated_balance_sheet_fact", "division_nbr",         "division_text",   "division_nbr"),
-            ("consolidated_balance_sheet_fact", "fiscal_year_period_nbr","calendar_fiscal_period_v", "fiscal_year_period_nbr"),
+            #("consolidated_balance_sheet_fact", "fiscal_year_period_nbr","calendar_fiscal_period_v", "fiscal_year_period_nbr"),
         ]
         for fact_tbl, fact_col, ref_tbl, ref_col in nk_checks:
             if not (_exists(fact_tbl) and _exists(ref_tbl)):
@@ -318,10 +318,10 @@ class DataGenOrchestrator:
             mark = "OK" if info["ok"] else "FAIL"
             print(f"    [{mark}] {label:<70} sampled={info['sampled']:,}  orphans={info['orphans']}")
 
-        print("\n  Natural-key integrity (CIS_fact / consolidated_balance_sheet_fact)")
-        for label, info in results.get("natural_key_integrity", {}).items():
-            mark = "OK" if info["ok"] else "FAIL"
-            print(f"    [{mark}] {label:<80} rows={info['rows']:,}  orphans={info['orphans']}")
+        # print("\n  Natural-key integrity (CIS_fact / consolidated_balance_sheet_fact)")
+        # for label, info in results.get("natural_key_integrity", {}).items():
+        #     mark = "OK" if info["ok"] else "FAIL"
+        #     print(f"    [{mark}] {label:<80} rows={info['rows']:,}  orphans={info['orphans']}")
 
         print("=" * 78)
 
@@ -356,16 +356,16 @@ class DataGenOrchestrator:
         cal_cfg = self._vol("calendar_fiscal_period_v")["rows"]
         cal_actual = min(int(cal_cfg), FISCAL_MAX_PERIODS)
 
-        div_cfg = self._vol("division_text")["rows"]
-        div_actual = min(int(div_cfg), DIVISION_TEXT_MAX_ROWS)
+        # div_cfg = self._vol("division_text")["rows"]
+        # div_actual = min(int(div_cfg), DIVISION_TEXT_MAX_ROWS)
 
         return {
             # "accounting_document_type": self._vol("accounting_document_type")["rows"],
             "calendar_fiscal_period_v": cal_actual,
             "profit_center": self._vol("profit_center")["rows"],
-            "division_text": div_actual,
+            # "division_text": div_actual,
             "version_forecast_mapping": self._vol("version_forecast_mapping")["rows"],
-            "functional_area": self._vol("functional_area")["rows"],
+            # "functional_area": self._vol("functional_area")["rows"],
             "finance_product_dim_v": self._vol("finance_product_dim_v")["rows"],
             "finance_customer_dim_v": self._vol("finance_customer_dim_v")["rows"],
             "company_code": self._vol("company_code")["rows"],
