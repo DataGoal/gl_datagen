@@ -31,10 +31,16 @@ def _gen_cost_center_hierarchy(
     partitions: int,
     pk_col: str = "cost_center_hierarchy_hist_id",
 ) -> DataFrame:
-    """Shared builder for cost_center hierarchy tables (30 levels)."""
+    """Shared builder for cost_center hierarchy tables (30 levels).
+
+    cost_center_nbr is generated as a sequential CC_000001..CC_NNNNNN range so
+    that INNER JOINs on glf.cost_center_nbr = hierarchy.cost_center_nbr resolve
+    correctly.  The hierarchy row-count (rows) controls which subset of the fact
+    table's cost-center FK range survives: survival_rate = rows / cost_center_dim_v.rows.
+    """
     gen = make_generator(spark, table_name, rows, partitions)
     gen = pk_bigint(gen, pk_col)
-    gen = template_string(gen, "cost_center_nbr", r"CC_dddddd")
+    gen = pk_string(gen, "cost_center_nbr", "CC", 6)
     gen = enum_col(gen, "cost_center_hierarchy_nm",
                    ["Corporate", "EMEA", "NA", "APLA", "GC", "DTC", "Wholesale"],
                    weights=[15, 20, 20, 15, 15, 10, 5])
@@ -168,11 +174,15 @@ def gen_segment_cost_center_hierarchy_dim_v(spark: SparkSession, rows: int, part
 def gen_segment_profit_center_hierarchy(spark: SparkSession, rows: int, partitions: int) -> DataFrame:
     """
     NOTE: schema.yaml exposes ``__segment_profit_center_nbr_id`` (bigint) as a
-    visible column alongside the string PK ``segment_profit_center_nbr``, so we
+    visible column alongside the string PK ``profit_center_nbr``, so we
     pass ``keep_id_col=True`` to keep it in the output.
+
+    profit_center_nbr uses the same "PC_" prefix as the fact table's
+    profit_center_nbr FK so INNER JOINs resolve correctly.  survival_rate for
+    the profit-center JOIN = rows / profit_center.rows.
     """
     gen = make_generator(spark, "segment_profit_center_hierarchy", rows, partitions)
-    gen = pk_string(gen, "segment_profit_center_nbr", "SPC", 6, keep_id_col=True)
+    gen = pk_string(gen, "profit_center_nbr", "PC", 6, keep_id_col=True)
     gen = enum_col(gen, "profit_center_hierarchy_nm",
                    ["Segment NA", "Segment EMEA", "Segment GC", "Segment APLA"], weights=[30, 25, 25, 20])
     for lvl in range(1, 10):
@@ -194,9 +204,12 @@ def gen_DisChannel_cost_center_hierarchy_dim_v(spark: SparkSession, rows: int, p
 # ---------------------------------------------------------------------------
 
 def gen_DisChannel_profit_center_hierarchy(spark: SparkSession, rows: int, partitions: int) -> DataFrame:
+    # distrchnl_profit_center_nbr is sequential PC_000001..PC_00rows so that
+    # ON glf.profit_center_nbr = dcpch.distrchnl_profit_center_nbr resolves
+    # correctly.  survival_rate = rows / profit_center.rows.
     gen = make_generator(spark, "DisChannel_profit_center_hierarchy", rows, partitions)
     gen = pk_bigint(gen, "profit_center_hierarchy_id")
-    gen = template_string(gen, "distrchnl_profit_center_nbr", r"PC_dddddd")
+    gen = pk_string(gen, "distrchnl_profit_center_nbr", "PC", 6)
     gen = enum_col(gen, "controlling_area_cd",
                    ["NA01", "EU01", "AP01", "CA01", "LA01", "GC01"], weights=[30, 25, 15, 10, 10, 10])
     gen = enum_col(gen, "profit_center_hierarchy_nm",
