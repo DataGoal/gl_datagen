@@ -396,18 +396,18 @@ class DataGenOrchestrator:
         # by any fact table, so that running the orchestrator with a
         # fact-only filter still produces a referentially-consistent dataset.
         dim_generators = [
-            ("accounting_document_type",
-             lambda r, p: gen_accounting_document_type(sp, r, p)),
+            # ("accounting_document_type",
+            #  lambda r, p: gen_accounting_document_type(sp, r, p)),
             ("calendar_fiscal_period_v",
              lambda r, p: gen_calendar_fiscal_period_v(sp, r, p)),
             ("profit_center",
              lambda r, p: gen_profit_center(sp, r, p)),
-            ("division_text",
-             lambda r, p: gen_division_text(sp, r, p)),
+            # ("division_text",
+            #  lambda r, p: gen_division_text(sp, r, p)),
             ("version_forecast_mapping",
              lambda r, p: gen_version_forecast_mapping(sp, r, p)),
-            ("functional_area",
-             lambda r, p: gen_functional_area(sp, r, p)),
+            # ("functional_area",
+            #  lambda r, p: gen_functional_area(sp, r, p)),
             ("finance_product_dim_v",
              lambda r, p: gen_finance_product_dim_v(sp, r, p)),
             ("finance_customer_dim_v",
@@ -447,27 +447,27 @@ class DataGenOrchestrator:
                 "fn": lambda _r=r, _p=p: gen_general_ledger_fact(sp, _r, _p, dim_rows),
             })
 
-        if include("CIS_fact"):
-            r, p = cfg("CIS_fact")
-            steps.append({
-                "table": "CIS_fact", "rows": r, "partitions": p,
-                "fn": lambda _r=r, _p=p: gen_CIS_fact(sp, _r, _p, dim_rows),
-            })
+        # if include("CIS_fact"):
+        #     r, p = cfg("CIS_fact")
+        #     steps.append({
+        #         "table": "CIS_fact", "rows": r, "partitions": p,
+        #         "fn": lambda _r=r, _p=p: gen_CIS_fact(sp, _r, _p, dim_rows),
+        #     })
 
-        if include("consolidated_balance_sheet_fact"):
-            r, p = cfg("consolidated_balance_sheet_fact")
-            steps.append({
-                "table": "consolidated_balance_sheet_fact", "rows": r, "partitions": p,
-                "fn": lambda _r=r, _p=p: gen_consolidated_balance_sheet_fact(sp, _r, _p, dim_rows),
-            })
+        # if include("consolidated_balance_sheet_fact"):
+        #     r, p = cfg("consolidated_balance_sheet_fact")
+        #     steps.append({
+        #         "table": "consolidated_balance_sheet_fact", "rows": r, "partitions": p,
+        #         "fn": lambda _r=r, _p=p: gen_consolidated_balance_sheet_fact(sp, _r, _p, dim_rows),
+        #     })
 
         # ---- Phase 3: Hierarchy & reference tables ----------------------------
         hierarchy_generators = [
-            ("atscale_geo_security", lambda r, p: gen_atscale_geo_security(sp, r, p)),
-            ("consolidation_functional_area_hierarchy",
-             lambda r, p: gen_consolidation_functional_area_hierarchy(sp, r, p)),
-            ("consolidation_segment_hierarchy_dim",
-             lambda r, p: gen_consolidation_segment_hierarchy_dim(sp, r, p)),
+            # ("atscale_geo_security", lambda r, p: gen_atscale_geo_security(sp, r, p)),
+            # ("consolidation_functional_area_hierarchy",
+            #  lambda r, p: gen_consolidation_functional_area_hierarchy(sp, r, p)),
+            # ("consolidation_segment_hierarchy_dim",
+            #  lambda r, p: gen_consolidation_segment_hierarchy_dim(sp, r, p)),
             ("segment_cost_center_hierarchy_dim_v",
              lambda r, p: gen_segment_cost_center_hierarchy_dim_v(sp, r, p)),
             ("segment_profit_center_hierarchy",
@@ -476,16 +476,16 @@ class DataGenOrchestrator:
              lambda r, p: gen_DisChannel_cost_center_hierarchy_dim_v(sp, r, p)),
             ("DisChannel_profit_center_hierarchy",
              lambda r, p: gen_DisChannel_profit_center_hierarchy(sp, r, p)),
-            ("PartDisChannel_profit_center_hierarchy",
-             lambda r, p: gen_PartDisChannel_profit_center_hierarchy(sp, r, p)),
+            # ("PartDisChannel_profit_center_hierarchy",
+            #  lambda r, p: gen_PartDisChannel_profit_center_hierarchy(sp, r, p)),
             ("division_text_dim_v",
              lambda r, p: gen_division_text_dim_v(sp, r, p)),
-            ("gl_account_hierarchy",
-             lambda r, p: gen_gl_account_hierarchy(sp, r, p)),
-            ("management_gl_account_hierarchy",
-             lambda r, p: gen_management_gl_account_hierarchy(sp, r, p)),
-            ("retail_global_store_profile_v",
-             lambda r, p: gen_retail_global_store_profile_v(sp, r, p)),
+            # ("gl_account_hierarchy",
+            #  lambda r, p: gen_gl_account_hierarchy(sp, r, p)),
+            # ("management_gl_account_hierarchy",
+            #  lambda r, p: gen_management_gl_account_hierarchy(sp, r, p)),
+            # ("retail_global_store_profile_v",
+            #  lambda r, p: gen_retail_global_store_profile_v(sp, r, p)),
         ]
 
         for tbl, fn in hierarchy_generators:
