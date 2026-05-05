@@ -41,12 +41,12 @@ from utils.spark_utils import configure_spark, ensure_catalog_schema, write_tabl
 
 from src.generators.dimension_generators import (
     DIVISION_TEXT_MAX_ROWS,
-    gen_accounting_document_type,
+    # gen_accounting_document_type,
     gen_calendar_fiscal_period_v,
     gen_profit_center,
-    gen_division_text,
+    # gen_division_text,
     gen_version_forecast_mapping,
-    gen_functional_area,
+    # gen_functional_area,
     gen_finance_product_dim_v,
     gen_finance_customer_dim_v,
     gen_company_code,
@@ -58,24 +58,24 @@ from src.generators.dimension_generators import (
 )
 from src.generators.fact_generators import (
     gen_general_ledger_fact,
-    gen_CIS_fact,
-    gen_consolidated_balance_sheet_fact,
+    # gen_CIS_fact,
+    # gen_consolidated_balance_sheet_fact,
 )
 from src.generators.hierarchy_generators import (
-    gen_atscale_geo_security,
-    gen_consolidation_functional_area_hierarchy,
-    gen_consolidation_segment_hierarchy_dim,
+    # gen_atscale_geo_security,
+    # gen_consolidation_functional_area_hierarchy,
+    #gen_consolidation_segment_hierarchy_dim,
     gen_segment_cost_center_hierarchy_dim_v,
     gen_segment_profit_center_hierarchy,
     gen_DisChannel_cost_center_hierarchy_dim_v,
     gen_DisChannel_profit_center_hierarchy,
-    gen_PartDisChannel_profit_center_hierarchy,
+    # gen_PartDisChannel_profit_center_hierarchy,
     gen_division_text_dim_v,
-    gen_gl_account_hierarchy,
-    gen_management_gl_account_hierarchy,
+    # gen_gl_account_hierarchy,
+    # gen_management_gl_account_hierarchy,
     gen_gl_account_zfsm_measures_hierarchy_dim,
     gen_finance_foreign_currency_exchange_rate,
-    gen_retail_global_store_profile_v,
+    # gen_retail_global_store_profile_v,
 )
 
 
