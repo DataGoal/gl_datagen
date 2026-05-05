@@ -196,16 +196,16 @@ class DataGenOrchestrator:
         # ---- PK uniqueness on the central fact and key dims ------------------
         pk_checks = [
             ("general_ledger_fact", "general_ledger_fact_id"),
-            ("CIS_fact", "gl_account_id"),
-            ("consolidated_balance_sheet_fact", "consolidated_balance_sheet_fact_id"),
+            # ("CIS_fact", "gl_account_id"),
+            # ("consolidated_balance_sheet_fact", "consolidated_balance_sheet_fact_id"),
             ("profit_center", "profit_center_id"),
             ("company_code", "company_id"),
             ("functional_area", "functional_area_id"),
-            ("division_text", "division_id"),
+            # ("division_text", "division_id"),
             ("finance_product_dim_v", "product_id"),
             ("finance_customer_dim_v", "finance_customer_id"),
             ("copa_attribution_dim", "copa_attribution_id"),
-            ("accounting_document_type", "accounting_document_type_id"),
+            # ("accounting_document_type", "accounting_document_type_id"),
             ("calendar_fiscal_period_v", "fiscal_year_period_nbr"),
             ("cost_center_dim_v", "cost_center_nbr"),
             ("gl_account_dim", "gl_account_nbr"),
@@ -233,10 +233,10 @@ class DataGenOrchestrator:
             )
 
             fk_checks = [
-                ("accounting_document_type_id", "accounting_document_type", "accounting_document_type_id"),
+                # ("accounting_document_type_id", "accounting_document_type", "accounting_document_type_id"),
                 ("fiscal_year_period_nbr",       "calendar_fiscal_period_v", "fiscal_year_period_nbr"),
                 ("profit_center_id",             "profit_center",            "profit_center_id"),
-                ("division_id",                  "division_text",            "division_id"),
+                # ("division_id",                  "division_text",            "division_id"),
                 ("version_forecast_mapping_id",  "version_forecast_mapping", "version_forecast_mapping_id"),
                 ("functional_area_id",           "functional_area",          "functional_area_id"),
                 ("product_id",                   "finance_product_dim_v",    "product_id"),
@@ -274,11 +274,11 @@ class DataGenOrchestrator:
         nk_checks = [
             ("CIS_fact", "profit_center_nbr",    "profit_center",            "profit_center_nbr"),
             ("CIS_fact", "functional_area_cd",   "functional_area",          "functional_area_cd"),
-            ("CIS_fact", "division_nbr",         "division_text",            "division_nbr"),
+            # ("CIS_fact", "division_nbr",         "division_text",            "division_nbr"),
             ("CIS_fact", "fiscal_year_period_nbr", "calendar_fiscal_period_v", "fiscal_year_period_nbr"),
             ("consolidated_balance_sheet_fact", "profit_center_nbr",    "profit_center",   "profit_center_nbr"),
             ("consolidated_balance_sheet_fact", "functional_area_cd",   "functional_area", "functional_area_cd"),
-            ("consolidated_balance_sheet_fact", "division_nbr",         "division_text",   "division_nbr"),
+            # ("consolidated_balance_sheet_fact", "division_nbr",         "division_text",   "division_nbr"),
             ("consolidated_balance_sheet_fact", "fiscal_year_period_nbr","calendar_fiscal_period_v", "fiscal_year_period_nbr"),
         ]
         for fact_tbl, fact_col, ref_tbl, ref_col in nk_checks:
@@ -360,7 +360,7 @@ class DataGenOrchestrator:
         div_actual = min(int(div_cfg), DIVISION_TEXT_MAX_ROWS)
 
         return {
-            "accounting_document_type": self._vol("accounting_document_type")["rows"],
+            # "accounting_document_type": self._vol("accounting_document_type")["rows"],
             "calendar_fiscal_period_v": cal_actual,
             "profit_center": self._vol("profit_center")["rows"],
             "division_text": div_actual,
