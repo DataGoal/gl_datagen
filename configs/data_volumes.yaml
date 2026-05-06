@@ -58,7 +58,7 @@ general_ledger_fact:
 # ---------------------------------------------------------------------------
 
 calendar_fiscal_period_v:
-  rows: 384                       # 32 fiscal years × 12 periods (FISCAL_MAX_PERIODS cap)
+  rows: 504                       # 32 fiscal years × 12 periods (FISCAL_MAX_PERIODS cap)
   partitions: 1
 
 profit_center:
