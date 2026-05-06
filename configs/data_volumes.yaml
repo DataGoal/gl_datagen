@@ -63,7 +63,7 @@ calendar_fiscal_period_v:
 
 profit_center:
   rows: 5000000                      # fact samples PC_000001..PC_005000
-  partitions: 4000000
+  partitions: 400
 
 version_forecast_mapping:
   rows: 300000
