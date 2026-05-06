@@ -1,0 +1,351 @@
+version: 1.1
+comment: >
+  General Ledger fact aggregation metric view. Combines the GL fact table with
+  dimension tables for financial performance reporting across profit centers,
+  cost centers, fiscal periods, GL account hierarchies, and ZFSM measures.
+
+source: development.dev_pbi_perform_cf_poc.general_ledger_fact_2B
+
+joins:
+  - name: pc
+    source: development.dev_pbi_perform_cf_poc.profit_center
+    on: source.profit_center_nbr = pc.profit_center_nbr
+
+  - name: dcpch
+    source: development.dev_pbi_perform_cf_poc.dischannel_profit_center_hierarchy
+    on: source.profit_center_nbr = dcpch.distrchnl_profit_center_nbr
+
+  - name: spch
+    source: development.dev_pbi_perform_cf_poc.segment_profit_center_hierarchy
+    on: source.profit_center_nbr = spch.profit_center_nbr
+
+  - name: t
+    source: development.dev_pbi_perform_cf_poc.calendar_fiscal_period_v
+    on: source.fiscal_year_period_nbr = t.fiscal_year_period_nbr
+
+  - name: zfsm
+    source: development.dev_pbi_perform_cf_poc.gl_account_zfsm_measures_hierarchy_dim
+    on: source.zfsm_measure_id = zfsm.zfsm_measure_id
+
+  - name: fcer
+    source: development.dev_pbi_perform_cf_poc.finance_foreign_currency_exchange_rate
+    on: source.etm_foreign_currency_exchange_rate_id = fcer.finance_foreign_currency_exchange_rate_id
+
+  - name: gla
+    source: development.dev_pbi_perform_cf_poc.gl_account_dim
+    on: source.gl_account_nbr = gla.gl_account_nbr
+
+  - name: v
+    source: development.dev_pbi_perform_cf_poc.version_forecast_mapping
+    on: source.version_forecast_mapping_id = v.version_forecast_mapping_id
+
+  # Second alias for profit_center — used for geography/territory attributes
+  - name: spc
+    source: development.dev_pbi_perform_cf_poc.profit_center
+    on: source.profit_center_nbr = spc.profit_center_nbr
+
+  - name: prd
+    source: development.dev_pbi_perform_cf_poc.finance_product_dim_v
+    on: source.product_id = prd.product_id
+
+  - name: cust
+    source: development.dev_pbi_perform_cf_poc.finance_customer_dim_v
+    on: source.customer_id = cust.finance_customer_id
+
+  - name: cc
+    source: development.dev_pbi_perform_cf_poc.company_code
+    on: source.company_cd = cc.company_cd
+
+  - name: copa
+    source: development.dev_pbi_perform_cf_poc.copa_attribution_dim
+    on: source.copa_attribution_id = copa.copa_attribution_id
+
+  - name: div_tbl
+    source: development.dev_pbi_perform_cf_poc.division_text_dim_v
+    on: source.division_id = div_tbl.division_id
+
+  - name: cstc
+    source: development.dev_pbi_perform_cf_poc.cost_center_dim_v
+    on: source.cost_center_nbr = cstc.cost_center_nbr
+
+  - name: dccch
+    source: development.dev_pbi_perform_cf_poc.dischannel_cost_center_hierarchy_dim_v
+    on: source.cost_center_nbr = dccch.cost_center_nbr
+
+  - name: scch
+    source: development.dev_pbi_perform_cf_poc.segment_cost_center_hierarchy_dim_v
+    on: source.cost_center_nbr = scch.cost_center_nbr
+
+  - name: gmc
+    source: development.dev_pbi_perform_cf_poc.geo_marketplace_channel_dim
+    on: source.geo_marketplace_channel_id = gmc.geo_marketplace_channel_id
+
+dimensions:
+  # ── Cost Center attributes ──────────────────────────────────────────────────
+  - name: a_distribution_channel_cost_center
+    expr: cstc.cost_center_nm
+    display_name: Distribution Channel Cost Center
+
+  - name: a_segment_cost_center
+    expr: cstc.cost_center_nm
+    display_name: Segment Cost Center
+
+  # ── Division / Product ──────────────────────────────────────────────────────
+  - name: a_division_group
+    expr: div_tbl.division_group
+    display_name: Division Group
+
+  - name: a_global_sport_focus_desc
+    expr: prd.global_sport_focus_desc
+    display_name: Global Sport Focus
+
+  # ── GL Fact indicators & codes (source table columns) ──────────────────────
+  - name: accounting_document_type_code
+    expr: accounting_document_type_cd
+    display_name: Accounting Document Type Code
+
+  - name: anaplan_corporate_indicator
+    expr: anaplan_corporate_ind
+    display_name: Anaplan Corporate Indicator
+
+  - name: cis_delta_indicator
+    expr: cis_delta_ind
+    display_name: CIS Delta Indicator
+
+  - name: company_currency_code
+    expr: company_currency_cd
+    display_name: Company Currency Code
+
+  - name: functional_area_code
+    expr: functional_area_cd
+    display_name: Functional Area Code
+
+  - name: general_ledger_fact_indicator
+    expr: general_ledger_fact_ind
+    display_name: General Ledger Fact Indicator
+
+  - name: general_ledger_ocogs_allocation_fact_indicator
+    expr: general_ledger_ocogs_allocation_fact_ind
+    display_name: GL OCOGS Allocation Fact Indicator
+
+  - name: transaction_currency_code
+    expr: transaction_currency_cd
+    display_name: Transaction Currency Code
+
+  # ── Company ─────────────────────────────────────────────────────────────────
+  - name: company_code
+    expr: cc.company_cd
+    display_name: Company Code
+
+  # ── Profit Center hierarchy ─────────────────────────────────────────────────
+  - name: distribution_channel_profit_center
+    expr: dcpch.distrchnl_profit_center_nbr
+    display_name: Distribution Channel Profit Center
+
+  - name: distribution_channel_profit_center_dup
+    expr: dcpch.distrchnl_profit_center_nbr
+    display_name: Distribution Channel Profit Center (Duplicate)
+
+  - name: profit_center_channel
+    expr: pc.profit_center_channel_nm
+    display_name: Profit Center Channel
+
+  - name: profit_center_number
+    expr: pc.profit_center_nbr
+    display_name: Profit Center Number
+
+  - name: segment_profit_center
+    expr: spch.profit_center_nbr
+    display_name: Segment Profit Center
+
+  - name: segment_profit_center_dup
+    expr: spch.profit_center_nbr
+    display_name: Segment Profit Center (Duplicate)
+
+  # ── Geography / Territory ───────────────────────────────────────────────────
+  - name: geography
+    expr: spc.geography_nm
+    display_name: Geography
+
+  - name: territory
+    expr: spc.territory_nm
+    display_name: Territory
+
+  - name: sub_territory
+    expr: spc.sub_territory_nm
+    display_name: Sub Territory
+
+  # ── Fiscal calendar ─────────────────────────────────────────────────────────
+  - name: fiscal_year
+    expr: t.fiscal_year_nbr
+    display_name: Fiscal Year
+    synonyms:
+      - year
+      - FY
+
+  - name: fiscal_year_period
+    expr: t.fiscal_year_period_nbr
+    display_name: Fiscal Year Period
+    synonyms:
+      - period
+      - fiscal period
+
+  - name: fiscal_year_quarter
+    expr: t.fiscal_year_quarter_nbr
+    display_name: Fiscal Year Quarter
+    synonyms:
+      - quarter
+      - FY quarter
+
+  # ── GL Account hierarchy (name attributes) ──────────────────────────────────
+  - name: gl_account_level_8_attribute
+    expr: zfsm.gl_account_level_8_nm
+    display_name: GL Account Level 8 Attribute
+
+  - name: gl_account_level_9_attribute
+    expr: zfsm.gl_account_level_9_nm
+    display_name: GL Account Level 9 Attribute
+
+  - name: gl_account_level_10_attribute
+    expr: zfsm.gl_account_level_10_nm
+    display_name: GL Account Level 10 Attribute
+
+  - name: gl_account_level_11
+    expr: zfsm.gl_account_level_11_cd
+    display_name: GL Account Level 11
+
+  - name: gl_account_level_12_attribute
+    expr: zfsm.gl_account_level_12_nm
+    display_name: GL Account Level 12 Attribute
+
+  - name: gl_account_number
+    expr: gla.gl_account_nbr
+    display_name: GL Account Number
+
+  # ── GL Account hierarchy (alt-name attributes, mirrors above) ───────────────
+  - name: gl_acct_level_8_attribute
+    expr: zfsm.gl_account_level_8_nm
+    display_name: GL Acct Level 8 Attribute
+
+  - name: gl_acct_level_9_attribute
+    expr: zfsm.gl_account_level_9_nm
+    display_name: GL Acct Level 9 Attribute
+
+  - name: gl_acct_level_10_attribute
+    expr: zfsm.gl_account_level_10_nm
+    display_name: GL Acct Level 10 Attribute
+
+  - name: gl_acct_level_11_attribute
+    expr: zfsm.gl_account_level_11_nm
+    display_name: GL Acct Level 11 Attribute
+
+  - name: gl_acct_level_12_attribute
+    expr: zfsm.gl_account_level_12_nm
+    display_name: GL Acct Level 12 Attribute
+
+  # ── Lookup / surrogate key dimensions (l_ prefix) ───────────────────────────
+  - name: l_copa_attribution_id
+    expr: copa.copa_attribution_id
+    display_name: COPA Attribution ID
+
+  - name: l_cost_center_nbr
+    expr: cstc.cost_center_nbr
+    display_name: Cost Center Number
+
+  - name: l_customer_id
+    expr: cust.finance_customer_id
+    display_name: Customer ID
+
+  - name: l_distribution_channel_cost_center
+    expr: dccch.cost_center_nbr
+    display_name: Distribution Channel Cost Center Number
+
+  - name: l_division_id
+    expr: div_tbl.division_id
+    display_name: Division ID
+
+  - name: l_fiscal_year
+    expr: t.fiscal_year_nbr
+    display_name: Fiscal Year (Key)
+
+  - name: l_fiscal_year_period
+    expr: t.fiscal_year_period_nbr
+    display_name: Fiscal Year Period (Key)
+
+  - name: l_fiscal_year_quarter
+    expr: t.fiscal_year_quarter_nbr
+    display_name: Fiscal Year Quarter (Key)
+
+  - name: l_geo_marketplace_channel_id
+    expr: gmc.geo_marketplace_channel_id
+    display_name: Geo Marketplace Channel ID
+
+  - name: l_gl_account_level_8
+    expr: zfsm.gl_account_level_8_cd
+    display_name: GL Account Level 8 Code
+
+  - name: l_gl_account_level_9
+    expr: zfsm.gl_account_level_9_cd
+    display_name: GL Account Level 9 Code
+
+  - name: l_gl_account_level_10
+    expr: zfsm.gl_account_level_10_cd
+    display_name: GL Account Level 10 Code
+
+  - name: l_gl_account_level_11
+    expr: zfsm.gl_account_level_11_cd
+    display_name: GL Account Level 11 Code
+
+  - name: l_gl_account_level_12
+    expr: zfsm.gl_account_level_12_cd
+    display_name: GL Account Level 12 Code
+
+  - name: l_segment_cost_center
+    expr: scch.cost_center_nbr
+    display_name: Segment Cost Center Number
+
+  - name: l_segment_profit_center
+    expr: spc.profit_center_nbr
+    display_name: Segment Profit Center Number
+
+  - name: l_zfsm_measures_id
+    expr: zfsm.zfsm_measure_id
+    display_name: ZFSM Measures ID
+
+  # ── Other identifiers ───────────────────────────────────────────────────────
+  - name: finance_foreign_currency_exchange_rate_id
+    expr: fcer.finance_foreign_currency_exchange_rate_id
+    display_name: Finance Foreign Currency Exchange Rate ID
+
+  - name: version_forecast_mapping_id
+    expr: v.version_forecast_mapping_id
+    display_name: Version Forecast Mapping ID
+
+  - name: zfsm_measure_cd
+    expr: zfsm.zfsm_measure_cd
+    display_name: ZFSM Measure Code
+
+measures:
+  - name: iris_performance_management_currency_amount
+    expr: SUM(performance_management_currency_amt)
+    display_name: IRIS Performance Management Currency Amount
+    comment: Sum of performance management currency amounts from the GL fact table.
+    synonyms:
+      - PM currency amount
+      - performance management amount
+
+  - name: iris_returns_units_calc
+    expr: SUM(returns_qty)
+    display_name: IRIS Returns Units
+    comment: Sum of returns quantity from the GL fact table.
+    synonyms:
+      - returns units
+      - returns qty
+
+  - name: iris_sales_units_calc
+    expr: SUM(sales_qty)
+    display_name: IRIS Sales Units
+    comment: Sum of sales quantity from the GL fact table.
+    synonyms:
+      - sales units
+      - sales qty

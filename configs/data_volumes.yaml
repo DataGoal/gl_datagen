@@ -40,7 +40,7 @@
 
 environment:
   catalog: development
-  schema: dev_pbi_perform_cf_poc
+  schema: dev_pbi_perform_cf_poc_25B
   write_mode: overwrite          # overwrite | append
   use_delta: true
   delta_optimize: false          # set true to run OPTIMIZE after write (slow on huge tables)
@@ -49,9 +49,9 @@ environment:
 # Primary fact table — 2 B rows as required
 # ---------------------------------------------------------------------------
 general_ledger_fact:
-  rows: 2_000_000_000
-  partitions: 2000                # tune to (target_rows / ~250k per partition)
-  shuffle_partitions: 400         # spark.sql.shuffle.partitions
+  rows: 25_000_000_000
+  partitions: 1_000_000_000                # tune to (target_rows / ~250k per partition)
+  shuffle_partitions: 4000_000         # spark.sql.shuffle.partitions
 
 # ---------------------------------------------------------------------------
 # Dimension tables — sizes are independent of the fact table
@@ -62,44 +62,44 @@ calendar_fiscal_period_v:
   partitions: 1
 
 profit_center:
-  rows: 500000                      # fact samples PC_000001..PC_005000
-  partitions: 4
+  rows: 5000000                      # fact samples PC_000001..PC_005000
+  partitions: 4000000
 
 version_forecast_mapping:
-  rows: 30000
-  partitions: 1
+  rows: 300000
+  partitions: 10
 
 finance_product_dim_v:
-  rows: 50000
-  partitions: 8
+  rows: 500000
+  partitions: 80
 
 finance_customer_dim_v:
-  rows: 100000
-  partitions: 4
+  rows: 1000000
+  partitions: 40
 
 company_code:
-  rows: 50000
-  partitions: 1
+  rows: 500000
+  partitions: 10
 
 copa_attribution_dim:
-  rows: 500000
-  partitions: 2
+  rows: 5000000
+  partitions: 20
 
 cost_center_dim_v:
-  rows: 500000                      # fact samples CC_000001..CC_005000
-  partitions: 4
+  rows: 5000000                      # fact samples CC_000001..CC_005000
+  partitions: 40
 
 geo_wholesale_value_business_dim:
-  rows: 200000
-  partitions: 1
+  rows: 2000000
+  partitions: 10
 
 geo_marketplace_channel_dim:
-  rows: 100000
-  partitions: 1
+  rows: 1000000
+  partitions: 10
 
 gl_account_dim:
-  rows: 200000
-  partitions: 2
+  rows: 2000000
+  partitions: 20
 
 # ---------------------------------------------------------------------------
 # Hierarchy / reference tables
@@ -112,29 +112,29 @@ gl_account_dim:
 # ---------------------------------------------------------------------------
 
 segment_cost_center_hierarchy_dim_v:
-  rows: 250000                      # ← covers CC_000001..CC_002500 (50 % of fact range)
-  partitions: 2
+  rows: 2500000                      # ← covers CC_000001..CC_002500 (50 % of fact range)
+  partitions: 20
 
 segment_profit_center_hierarchy:
-  rows: 200000                      # covers PC_000001..PC_002000 (40 % of fact range)
-  partitions: 2
+  rows: 2000000                      # covers PC_000001..PC_002000 (40 % of fact range)
+  partitions: 20
 
 DisChannel_cost_center_hierarchy_dim_v:
-  rows: 250000                      # ← same range as segment CC hierarchy
-  partitions: 2
+  rows: 2500000                      # ← same range as segment CC hierarchy
+  partitions: 20
 
 DisChannel_profit_center_hierarchy:
-  rows: 200000                        # same range as segment PC hierarchy
-  partitions: 2
+  rows: 2000000                        # same range as segment PC hierarchy
+  partitions: 20
 
 division_text_dim_v:
   rows: 20000
-  partitions: 1
+  partitions: 10
 
 gl_account_zfsm_measures_hierarchy_dim:
-  rows: 100000
-  partitions: 2
+  rows: 1000000
+  partitions: 20
 
 finance_foreign_currency_exchange_rate:
-  rows: 200000
-  partitions: 1
+  rows: 2000000
+  partitions: 10
