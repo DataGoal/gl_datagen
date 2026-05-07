@@ -49,7 +49,7 @@ environment:
 # Primary fact table — 2 B rows as required
 # ---------------------------------------------------------------------------
 general_ledger_fact:
-  rows: 2_000_000_000
+  rows: 2_500_000_000
   partitions: 2000                # tune to (target_rows / ~250k per partition)
   shuffle_partitions: 400         # spark.sql.shuffle.partitions
 
