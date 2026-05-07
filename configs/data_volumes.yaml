@@ -50,7 +50,7 @@ environment:
 # ---------------------------------------------------------------------------
 general_ledger_fact:
   rows: 25_000_000_000
-  partitions: 1_000_000_000                # tune to (target_rows / ~250k per partition)
+  partitions: 2000    # tune to (target_rows / ~250k per partition)
   shuffle_partitions: 4000_000         # spark.sql.shuffle.partitions
 
 # ---------------------------------------------------------------------------
@@ -63,7 +63,7 @@ calendar_fiscal_period_v:
 
 profit_center:
   rows: 5000000                      # fact samples PC_000001..PC_005000
-  partitions: 400
+  partitions: 40
 
 version_forecast_mapping:
   rows: 300000
