@@ -51,7 +51,7 @@ environment:
 general_ledger_fact:
   rows: 25_000_000_000
   partitions: 2000    # tune to (target_rows / ~250k per partition)
-  shuffle_partitions: 4000_000         # spark.sql.shuffle.partitions
+  shuffle_partitions: 400     # spark.sql.shuffle.partitions
 
 # ---------------------------------------------------------------------------
 # Dimension tables — sizes are independent of the fact table
