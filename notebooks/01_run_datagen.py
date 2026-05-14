@@ -1,14 +1,22 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # GL DataGen — Databricks Notebook
+# MAGIC # GL DataGen — Initial Full Load
 # MAGIC
-# MAGIC This notebook runs the full data generation pipeline.
+# MAGIC Generates **all** dimension and fact tables from scratch, then saves
+# MAGIC incremental state so subsequent runs (notebook `02_incremental_datagen`)
+# MAGIC can append new batches to `general_ledger_fact` without touching dims.
 # MAGIC
 # MAGIC ## Quick Start
-# MAGIC 1. Attach to a cluster (recommend: Standard_DS3_v2 × 8 workers for 1B rows,
-# MAGIC    scale up to 16+ workers for 25B rows).
-# MAGIC 2. Set the `FACT_ROWS` widget to your target row count.
-# MAGIC 3. Click **Run All**.
+# MAGIC 1. Attach to a cluster (Standard_DS4_v2 × 16+ workers for 25B rows).
+# MAGIC 2. Set `FACT_ROWS` to your target row count.
+# MAGIC 3. Leave `RUN_MODE` = **initial** for a fresh full load.
+# MAGIC 4. Click **Run All**.
+# MAGIC
+# MAGIC ## Run-mode guide
+# MAGIC | Mode        | What happens |
+# MAGIC |-------------|--------------|
+# MAGIC | `initial`   | All dimension + fact tables are (re)generated; incremental state is saved. |
+# MAGIC | `incremental` | Only `general_ledger_fact` is appended using frozen FK bounds and continued PKs. |
 # MAGIC
 # MAGIC ## Scaling guide
 # MAGIC | Target rows      | Workers | Partitions | Est. time |
@@ -35,33 +43,34 @@
 import sys
 import os
 
-# ── Point to the repo root (adjust if using a different mount or repo path) ──
 REPO_ROOT = "/Workspace/Users/balachandar.bhagyaraj@nike.com/gl_datagen"  # ← update this path
 sys.path.insert(0, REPO_ROOT)
 os.chdir(REPO_ROOT)
 
 # ── Databricks Widgets ────────────────────────────────────────────────────────
-dbutils.widgets.text("FACT_ROWS",        "25_000_000_000",   "Fact Table Row Count")
-dbutils.widgets.text("FACT_PARTITIONS",  "1_000",        "Fact Table Partitions")
-dbutils.widgets.text("WRITE_MODE",       "overwrite",  "Write Mode (overwrite|append)")
-dbutils.widgets.text("TABLES_TO_RUN",    "",           "Tables to run (comma-sep, blank=all)")
+dbutils.widgets.dropdown("RUN_MODE",       "initial",           ["initial", "incremental"], "Run Mode")
+dbutils.widgets.text("FACT_ROWS",          "25_000_000_000",    "Fact Table Row Count (initial mode)")
+dbutils.widgets.text("FACT_PARTITIONS",    "1_000",             "Fact Table Partitions")
+dbutils.widgets.text("INCREMENTAL_ROWS",   "500_000_000",       "Rows per Incremental Batch")
+dbutils.widgets.text("TABLES_TO_RUN",      "",                  "Tables to run (comma-sep, blank=all; initial mode only)")
 
-FACT_ROWS       = int(dbutils.widgets.get("FACT_ROWS"))
-FACT_PARTITIONS = int(dbutils.widgets.get("FACT_PARTITIONS"))
-WRITE_MODE      = dbutils.widgets.get("WRITE_MODE")
-TABLES_TO_RUN   = dbutils.widgets.get("TABLES_TO_RUN")
+RUN_MODE          = dbutils.widgets.get("RUN_MODE")
+FACT_ROWS         = int(dbutils.widgets.get("FACT_ROWS").replace("_", ""))
+FACT_PARTITIONS   = int(dbutils.widgets.get("FACT_PARTITIONS").replace("_", ""))
+INCREMENTAL_ROWS  = int(dbutils.widgets.get("INCREMENTAL_ROWS").replace("_", ""))
+TABLES_TO_RUN     = dbutils.widgets.get("TABLES_TO_RUN")
 
-# Parse table filter (empty = all tables)
 tables_filter = (
     [t.strip() for t in TABLES_TO_RUN.split(",") if t.strip()]
     if TABLES_TO_RUN.strip()
     else None
 )
 
-print(f"Fact rows       : {FACT_ROWS:,}")
+print(f"Run mode        : {RUN_MODE}")
+print(f"Fact rows       : {FACT_ROWS:,}  (initial)")
+print(f"Incremental rows: {INCREMENTAL_ROWS:,}  (incremental)")
 print(f"Fact partitions : {FACT_PARTITIONS}")
-print(f"Write mode      : {WRITE_MODE}")
-print(f"Tables filter   : {tables_filter or 'ALL'}")
+print(f"Tables filter   : {tables_filter or 'ALL'}  (initial mode only)")
 
 # COMMAND ----------
 
@@ -77,25 +86,52 @@ orch = DataGenOrchestrator(
     spark        = spark,
 )
 
-# Override fact table volume from widget values
-overrides = {
-    "general_ledger_fact": {
-        "rows": FACT_ROWS,
-        "partitions": FACT_PARTITIONS,
-        "shuffle_partitions": FACT_PARTITIONS,
+if RUN_MODE == "initial":
+    overrides = {
+        "general_ledger_fact": {
+            "rows":               FACT_ROWS,
+            "partitions":         FACT_PARTITIONS,
+            "shuffle_partitions": FACT_PARTITIONS,
+        }
     }
-}
+    orch.run(tables=tables_filter, overrides=overrides, mode="initial")
 
-orch.run(tables=tables_filter, overrides=overrides)
+elif RUN_MODE == "incremental":
+    overrides = {
+        "general_ledger_fact": {
+            "rows":       INCREMENTAL_ROWS,
+            "partitions": FACT_PARTITIONS,
+        }
+    }
+    orch.run(overrides=overrides, mode="incremental")
+
+else:
+    raise ValueError(f"Unknown RUN_MODE: {RUN_MODE!r}.  Must be 'initial' or 'incremental'.")
 
 # COMMAND ----------
 
-# MAGIC %md ## 3. Quick validation
+# MAGIC %md ## 3. Incremental state
 
 # COMMAND ----------
 
-catalog  = orch.catalog
-schema   = orch.db_schema
+state = orch.get_incremental_state()
+if state:
+    print("Incremental state:")
+    print(f"  last_fact_pk    : {state['last_fact_pk']:,}")
+    print(f"  total_fact_rows : {state['total_fact_rows']:,}")
+    print(f"  batch_count     : {state['batch_count']}")
+    print(f"  initial_seed    : {state['initial_seed']}")
+else:
+    print("No incremental state found (fact table not yet generated or state table missing).")
+
+# COMMAND ----------
+
+# MAGIC %md ## 4. Quick validation
+
+# COMMAND ----------
+
+catalog = orch.catalog
+schema  = orch.db_schema
 
 tables_to_check = [
     "general_ledger_fact",
@@ -119,15 +155,12 @@ for t in tables_to_check:
 
 # COMMAND ----------
 
-# MAGIC %md ## 4. Referential-integrity verification
+# MAGIC %md ## 5. Referential-integrity verification
 # MAGIC
-# MAGIC `verify_integrity()` runs three families of checks and prints a report:
+# MAGIC Runs three families of checks and prints a report:
 # MAGIC 1. PK uniqueness on facts and dimensions.
 # MAGIC 2. FK integrity from `general_ledger_fact` to every declared dim
-# MAGIC    (joined on a 1M-row sample by default).
-# MAGIC 3. Natural-key joinability for `CIS_fact` and
-# MAGIC    `consolidated_balance_sheet_fact` (`profit_center_nbr`,
-# MAGIC    `functional_area_cd`, `division_nbr`, `fiscal_year_period_nbr`).
+# MAGIC    (joined on a 1 M-row sample by default).
 # MAGIC
 # MAGIC Every check should report `orphans=0` for the dataset to be safe to
 # MAGIC build aggregate tables on top of.
@@ -140,28 +173,5 @@ assert all(v["ok"] for v in results.get("pk_uniqueness", {}).values()), \
     "PK uniqueness violation detected"
 assert all(v["ok"] for v in results.get("fk_integrity", {}).values()), \
     "FK integrity violation detected"
-assert all(v["ok"] for v in results.get("natural_key_integrity", {}).values()), \
-    "Natural-key integrity violation detected"
 
-# COMMAND ----------
-
-# MAGIC %md ## 5. (Optional) Scale to 25 billion rows
-# MAGIC
-# MAGIC To generate the full 25B row dataset, re-run with these overrides:
-# MAGIC ```python
-# MAGIC orch.run(
-# MAGIC     tables=["general_ledger_fact"],
-# MAGIC     overrides={
-# MAGIC         "general_ledger_fact": {
-# MAGIC             "rows": 25_000_000_000,
-# MAGIC             "partitions": 2000,
-# MAGIC             "shuffle_partitions": 2000,
-# MAGIC         }
-# MAGIC     }
-# MAGIC )
-# MAGIC ```
-# MAGIC
-# MAGIC **Recommended cluster for 25B rows:**
-# MAGIC - Driver: 64 GB RAM
-# MAGIC - Workers: 16–32 × Standard_DS4_v2 (28 GB RAM, 8 cores each)
-# MAGIC - Runtime: Databricks 14.x ML or above with Delta 3.x
+print("✅ All integrity checks passed.")

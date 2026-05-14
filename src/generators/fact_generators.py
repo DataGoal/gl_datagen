@@ -37,6 +37,7 @@ from utils.datagen_helpers import (
     fk_string,
     make_generator,
     pk_bigint,
+    pk_bigint_range,
     physical_source_col,
     template_string,
     user_id_col,
@@ -77,20 +78,37 @@ def gen_general_ledger_fact(
     rows: int,
     partitions: int,
     dim_rows: dict,          # {"table_name": row_count, ...}
+    pk_offset: int = 0,      # 0 = initial load; >0 = incremental (last written PK)
+    seed: int = 42,          # deterministic seed; increment per batch for distinct data
 ) -> DataFrame:
     """
     Generate the central general_ledger_fact table.
 
     Parameters
     ----------
-    dim_rows : dict mapping each referenced dimension table name to its row count.
-               Used to bound FK column ranges for referential integrity.
-               Example: {"accounting_document_type": 50, "profit_center": 5000, ...}
+    dim_rows  : dict mapping each referenced dimension table name to its row count.
+                Used to bound FK column ranges for referential integrity.
+                Example: {"profit_center": 5000, "company_code": 500, ...}
+    pk_offset : For incremental loads, the highest ``general_ledger_fact_id`` already
+                written.  New rows will receive PKs in ``[pk_offset+1, pk_offset+rows]``.
+                Set to 0 (default) for the initial full load.
+    seed      : Random seed passed to dbldatagen.  Use ``base_seed + batch_number``
+                for incremental batches so each batch produces distinct but reproducible
+                measure/FK distributions.
     """
-    gen = make_generator(spark, "general_ledger_fact", rows, partitions)
+    gen = make_generator(spark, "general_ledger_fact", rows, partitions, seed=seed)
 
     # ---- PK ------------------------------------------------------------------
-    gen = pk_bigint(gen, "general_ledger_fact_id")
+    if pk_offset > 0:
+        # Incremental load: assign PKs in the range (pk_offset, pk_offset + rows]
+        gen = pk_bigint_range(
+            gen, "general_ledger_fact_id",
+            start=pk_offset + 1,
+            end=pk_offset + rows,
+        )
+    else:
+        # Initial load: standard sequential PKs [1..rows]
+        gen = pk_bigint(gen, "general_ledger_fact_id")
 
     # ---- FK -> calendar_fiscal_period_v (int PK: YYYYPP values) -------------
     # Use the SAME first-N list the dim materialises to guarantee FK validity.

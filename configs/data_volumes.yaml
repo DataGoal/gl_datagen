@@ -46,6 +46,37 @@ environment:
   delta_optimize: false          # set true to run OPTIMIZE after write (slow on huge tables)
 
 # ---------------------------------------------------------------------------
+# Incremental load configuration
+# ---------------------------------------------------------------------------
+# Used when mode='incremental' is passed to DataGenOrchestrator.run().
+# Only general_ledger_fact is appended; all dimension tables are untouched.
+#
+# Surrogate key continuity
+# ------------------------
+# The state_table (a single-row Delta table in the same catalog/schema) stores:
+#   • last_fact_pk       — highest general_ledger_fact_id written (PK ceiling)
+#   • dim_rows_json      — frozen FK bounds from the initial load
+#   • batch_count        — completed incremental batch count (0 after initial)
+#   • total_fact_rows    — cumulative fact rows across all loads
+#   • initial_seed       — seed used during the initial load (default 42)
+#
+# Each incremental batch uses seed = initial_seed + batch_number so the FK/
+# measure distributions are deterministic and distinct per batch.
+#
+# PK safety
+# ---------
+# Before writing each batch the orchestrator compares last_fact_pk from state
+# with the actual MAX(general_ledger_fact_id) in the table and uses whichever
+# is larger. This guards against partial-write failures leaving the table ahead
+# of what state recorded.
+# ---------------------------------------------------------------------------
+incremental:
+  batch_rows:       500_000_000  # rows per incremental append (tune per cluster)
+  batch_partitions: 200          # output partitions for each batch
+  base_seed:        42           # matches the initial-load seed; batches use base+N
+  state_table:      _datagen_incremental_state  # table name (qualified at runtime)
+
+# ---------------------------------------------------------------------------
 # Primary fact table — 2 B rows as required
 # ---------------------------------------------------------------------------
 general_ledger_fact:

@@ -78,6 +78,32 @@ def pk_bigint(gen: dg.DataGenerator, col_name: str) -> dg.DataGenerator:
                           uniqueValues=gen.rowCount, random=False)
 
 
+def pk_bigint_range(
+    gen: dg.DataGenerator,
+    col_name: str,
+    start: int,
+    end: int,
+) -> dg.DataGenerator:
+    """
+    Sequential unique bigint PK over a specific range [start, end] (inclusive).
+
+    Used for incremental fact generation where PKs must not overlap with
+    previously written batches.  ``start`` should be ``last_fact_pk + 1``
+    and ``end`` should be ``last_fact_pk + batch_rows``.
+
+    Parameters
+    ----------
+    start : First PK value in this batch (> 0, exclusive of previous max PK).
+    end   : Last PK value in this batch (= start + rowCount - 1).
+    """
+    row_count = end - start + 1
+    return gen.withColumn(
+        col_name, T.LongType(),
+        minValue=start, maxValue=end,
+        uniqueValues=row_count, random=False,
+    )
+
+
 def pk_int(gen: dg.DataGenerator, col_name: str) -> dg.DataGenerator:
     """Sequential unique int PK starting from 1."""
     return gen.withColumn(col_name, T.IntegerType(), minValue=1, maxValue=gen.rowCount,
