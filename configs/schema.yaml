@@ -1,6 +1,6 @@
 version: 2
 catalog: development
-schema: dev_pbi_perform_cf_poc
+schema: dev_pbi_perform_cf_poc_2B_agg
 
 tables:
 

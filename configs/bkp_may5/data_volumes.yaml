@@ -9,7 +9,7 @@
 
 environment:
   catalog: development
-  schema: dev_pbi_perform_cf_poc
+  schema: dev_pbi_perform_cf_poc_2B_agg
   write_mode: overwrite          # overwrite | append
   use_delta: true
   delta_optimize: false          # set true to run OPTIMIZE after write (slow on huge tables)

@@ -2,7 +2,7 @@
 
 A production-quality, configuration-driven data generator built on
 [dbldatagen](https://databrickslabs.github.io/dbldatagen/) for the
-`dev_pbi_perform_cf_poc` schema. Generates realistic, referentially
+`dev_pbi_perform_cf_poc_2B_agg` schema. Generates realistic, referentially
 consistent data at any scale — from 1 million to 25 billion rows.
 
 ---
