@@ -58,7 +58,7 @@ general_ledger_fact:
 # ---------------------------------------------------------------------------
 
 calendar_fiscal_period_v:
-  rows: 864                       # 32 fiscal years × 12 periods (FISCAL_MAX_PERIODS cap)
+  rows: 744                       # 32 fiscal years × 12 periods (FISCAL_MAX_PERIODS cap)
   partitions: 1
 
 profit_center:
@@ -66,7 +66,7 @@ profit_center:
   partitions: 4
 
 version_forecast_mapping:
-  rows: 300000
+  rows: 30000
   partitions: 1
 
 finance_product_dim_v:
@@ -78,11 +78,11 @@ finance_customer_dim_v:
   partitions: 4
 
 company_code:
-  rows: 5000000
+  rows: 500000
   partitions: 1
 
 copa_attribution_dim:
-  rows: 5000000
+  rows: 500000
   partitions: 2
 
 cost_center_dim_v:
