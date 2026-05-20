@@ -62,43 +62,43 @@ calendar_fiscal_period_v:
   partitions: 1
 
 profit_center:
-  rows: 500000                      # fact samples PC_000001..PC_005000
+  rows: 5000000                      # fact samples PC_000001..PC_005000
   partitions: 40
 
 version_forecast_mapping:
-  rows: 30000
+  rows: 300000
   partitions: 10
 
 finance_product_dim_v:
-  rows: 50000
+  rows: 500000
   partitions: 80
 
 finance_customer_dim_v:
-  rows: 10000
+  rows: 100000
   partitions: 40
 
 company_code:
-  rows: 50000
+  rows: 500000
   partitions: 10
 
 copa_attribution_dim:
-  rows: 50000
+  rows: 500000
   partitions: 20
 
 cost_center_dim_v:
-  rows: 50000                     # fact samples CC_000001..CC_005000
+  rows: 500000                     # fact samples CC_000001..CC_005000
   partitions: 40
 
 geo_wholesale_value_business_dim:
-  rows: 20000
+  rows: 200000
   partitions: 10
 
 geo_marketplace_channel_dim:
-  rows: 10000
+  rows: 100000
   partitions: 10
 
 gl_account_dim:
-  rows: 20000
+  rows: 200000
   partitions: 20
 
 # ---------------------------------------------------------------------------
