@@ -46,7 +46,7 @@ environment:
   delta_optimize: false          # set true to run OPTIMIZE after write (slow on huge tables)
 
 # ---------------------------------------------------------------------------
-# Primary fact table — 2 B rows as required
+# Primary fact table — 25 B rows
 # ---------------------------------------------------------------------------
 general_ledger_fact:
   rows: 25_000_000_000

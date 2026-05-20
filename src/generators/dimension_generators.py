@@ -415,7 +415,11 @@ def gen_finance_customer_dim_v(spark: SparkSession, rows: int, partitions: int) 
 def gen_company_code(spark: SparkSession, rows: int, partitions: int) -> DataFrame:
     gen = make_generator(spark, "company_code", rows, partitions)
     gen = pk_bigint(gen, "company_id")
-    gen = template_string(gen, "company_cd", r"dddd")
+    # Derived from company_id so glf.company_cd = cc.company_cd JOIN has 100 % survival.
+    # The fact computes company_cd = lpad(string(company_id), 4, '0'), so the dim must match.
+    gen = gen.withColumn("company_cd", T.StringType(),
+                         baseColumn="company_id",
+                         expr="lpad(string(company_id), 4, '0')")
     gen = template_string(gen, "company_nm", r"rrrrrrrr rrrrrrrrrrr")
     gen = enum_col(gen, "currency_cd",
                    ["USD", "EUR", "GBP", "JPY", "CNY", "CHF", "CAD", "AUD"],
