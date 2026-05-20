@@ -7,35 +7,35 @@
 # can sample random integers within those ranges without a broadcast join.
 #
 # ---------------------------------------------------------------------------
-# Aggregated-table target: ~400 million rows
+# Aggregated-table target: ~2.5 B – 3 B rows  (midpoint ≈ 2.75 B)
 # ---------------------------------------------------------------------------
 # The aggregation query (GROUP BY across all joined dimensions) produces one
 # output row per distinct combination of GROUP BY keys.  Because the fixed-
 # cardinality columns in the fact table (indicators, currencies, doc-types,
 # fiscal periods, sport-focus) create far more possible key combinations than
-# the 2 B fact rows, virtually every fact row that *survives the INNER JOINs*
+# the 25 B fact rows, virtually every fact row that *survives the INNER JOINs*
 # maps to a unique output row.  Therefore:
 #
 #   aggregated_rows  ≈  fact_rows × join_survival_rate
 #
-# The INNER JOINs on profit_center_nbr and cost_center_nbr act as filters:
-# only fact rows whose FK value falls within the corresponding hierarchy
-# table's sequential key range [prefix_000001 .. prefix_00N] are retained.
+# The INNER JOINs on profit_center_nbr act as filters: only fact rows whose
+# FK value falls within the PC hierarchy tables' sequential key range
+# [PC_000001 .. PC_005500] are retained.
 #
 #   PC survival  = segment_profit_center_hierarchy.rows
 #                  / profit_center.rows
-#                = 2 000 / 5 000 = 0.40  (40 %)
+#                = 5 500 / 50 000 = 0.11  (11 %)
 #   (DisChannel_profit_center_hierarchy is set to the same size, so it adds
 #    no additional filtering beyond what segment already applies.)
 #
 #   CC survival  = segment_cost_center_hierarchy_dim_v.rows
 #                  / cost_center_dim_v.rows
-#                = 2 500 / 5 000 = 0.50  (50 %)
-#   (DisChannel_cost_center_hierarchy_dim_v is set identically.)
+#                = 25 000 / 5 000 > 1.0  →  100 %  (no CC filtering)
+#   (Both CC hierarchies exceed cost_center_dim_v.rows, so all CC rows survive.)
 #
-#   Combined survival  = 0.40 × 0.50 = 0.20  (20 %)
+#   Combined survival  = 0.11 × 1.00 = 0.11  (11 %)
 #
-#   Aggregated rows  ≈  2 000 000 000 × 0.20  =  400 000 000  ✓
+#   Aggregated rows  ≈  25 000 000 000 × 0.11  =  2 750 000 000  ✓
 # =============================================================================
 
 environment:
@@ -62,7 +62,7 @@ calendar_fiscal_period_v:
   partitions: 1
 
 profit_center:
-  rows: 50000                      # fact samples PC_000001..PC_005000
+  rows: 50000                      # fact samples PC_000001..PC_050000
   partitions: 40
 
 version_forecast_mapping:
@@ -104,28 +104,29 @@ gl_account_dim:
 # ---------------------------------------------------------------------------
 # Hierarchy / reference tables
 # ---------------------------------------------------------------------------
-# PC hierarchies: both set to 2 000 → cover PC_000001..PC_002000
-#   → PC JOIN survival = 2 000 / 5 000 = 40 %
-# CC hierarchies: both set to 2 500 → cover CC_000001..CC_002500
-#   → CC JOIN survival = 2 500 / 5 000 = 50 %
-# Combined survival = 40 % × 50 % = 20 %  →  2 B × 20 % = 400 M agg rows
+# PC hierarchies: both set to 5 500 → cover PC_000001..PC_005500
+#   → PC JOIN survival = 5 500 / 50 000 = 11 %
+#   (Both join on the same FK, so the smaller table is the effective filter.)
+# CC hierarchies: both set to 25 000 → cover CC_000001..CC_025000
+#   → CC JOIN survival = 25 000 / 5 000 > 1.0 → 100 % (no filtering)
+# Combined survival = 11 % × 100 % = 11 %  →  25 B × 11 % ≈ 2.75 B agg rows
 # ---------------------------------------------------------------------------
 
 segment_cost_center_hierarchy_dim_v:
-  rows: 25000                      # ← covers CC_000001..CC_002500 (50 % of fact range)
+  rows: 25000                      # ← exceeds cost_center_dim_v.rows → 100 % CC survival
   partitions: 20
 
 segment_profit_center_hierarchy:
-  rows: 20000                      # covers PC_000001..PC_002000 (40 % of fact range)
-  partitions: 20
+  rows: 5500                       # covers PC_000001..PC_005500 (11 % of profit_center range)
+  partitions: 5
 
 DisChannel_cost_center_hierarchy_dim_v:
-  rows: 25000                      # ← same range as segment CC hierarchy
+  rows: 25000                      # ← same as segment CC hierarchy → no additional filter
   partitions: 20
 
 DisChannel_profit_center_hierarchy:
-  rows: 20000                        # same range as segment PC hierarchy
-  partitions: 20
+  rows: 5500                       # same range as segment PC hierarchy → no additional filter
+  partitions: 5
 
 division_text_dim_v:
   rows: 200
