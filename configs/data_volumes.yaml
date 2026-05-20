@@ -62,43 +62,43 @@ calendar_fiscal_period_v:
   partitions: 1
 
 profit_center:
-  rows: 5000000                      # fact samples PC_000001..PC_005000
+  rows: 500000                      # fact samples PC_000001..PC_005000
   partitions: 40
 
 version_forecast_mapping:
-  rows: 300000
+  rows: 30000
   partitions: 10
 
 finance_product_dim_v:
-  rows: 500000
+  rows: 50000
   partitions: 80
 
 finance_customer_dim_v:
-  rows: 100000
+  rows: 10000
   partitions: 40
 
 company_code:
-  rows: 500000
+  rows: 50000
   partitions: 10
 
 copa_attribution_dim:
-  rows: 500000
+  rows: 50000
   partitions: 20
 
 cost_center_dim_v:
-  rows: 500000                     # fact samples CC_000001..CC_005000
+  rows: 50000                     # fact samples CC_000001..CC_005000
   partitions: 40
 
 geo_wholesale_value_business_dim:
-  rows: 200000
+  rows: 20000
   partitions: 10
 
 geo_marketplace_channel_dim:
-  rows: 100000
+  rows: 10000
   partitions: 10
 
 gl_account_dim:
-  rows: 200000
+  rows: 20000
   partitions: 20
 
 # ---------------------------------------------------------------------------
@@ -112,19 +112,19 @@ gl_account_dim:
 # ---------------------------------------------------------------------------
 
 segment_cost_center_hierarchy_dim_v:
-  rows: 250000                      # ← covers CC_000001..CC_002500 (50 % of fact range)
+  rows: 25000                      # ← covers CC_000001..CC_002500 (50 % of fact range)
   partitions: 20
 
 segment_profit_center_hierarchy:
-  rows: 200000                      # covers PC_000001..PC_002000 (40 % of fact range)
+  rows: 20000                      # covers PC_000001..PC_002000 (40 % of fact range)
   partitions: 20
 
 DisChannel_cost_center_hierarchy_dim_v:
-  rows: 250000                      # ← same range as segment CC hierarchy
+  rows: 25000                      # ← same range as segment CC hierarchy
   partitions: 20
 
 DisChannel_profit_center_hierarchy:
-  rows: 200000                        # same range as segment PC hierarchy
+  rows: 20000                        # same range as segment PC hierarchy
   partitions: 20
 
 division_text_dim_v:
@@ -132,9 +132,9 @@ division_text_dim_v:
   partitions: 10
 
 gl_account_zfsm_measures_hierarchy_dim:
-  rows: 100000
+  rows: 10000
   partitions: 20
 
 finance_foreign_currency_exchange_rate:
-  rows: 200000
+  rows: 20000
   partitions: 10
