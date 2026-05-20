@@ -345,8 +345,10 @@ class DataGenOrchestrator:
         PK domain is sampled by the fact tables. Used to set FK column ranges.
 
         ``calendar_fiscal_period_v`` is capped at :data:`FISCAL_MAX_PERIODS`
-        because the calendar dim itself only materialises that many distinct
-        ``fiscal_year_period_nbr`` values regardless of the configured row count.
+        (currently 504 = 42 years × 12 months) because the calendar dim only
+        materialises that many distinct ``fiscal_year_period_nbr`` values
+        regardless of the configured row count.  To support more periods raise
+        ``FISCAL_MAX_YEARS`` in ``utils/datagen_helpers.py``.
 
         ``division_text`` is capped at :data:`DIVISION_TEXT_MAX_ROWS` (20)
         because ``gen_division_text`` uses a hardcoded list of exactly 20

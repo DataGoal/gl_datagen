@@ -175,12 +175,14 @@ def fk_string(
 # Calendar / fiscal-period helpers
 # ---------------------------------------------------------------------------
 
-# Maximum span the calendar dim is allowed to cover. 16 years * 12 = 192 periods.
-# `gen_calendar_fiscal_period_v` and `fiscal_year_period` both honour this cap so
-# fact FK values can never escape the dim's PK domain.
+# Maximum span the calendar dim is allowed to cover.
+# 42 years × 12 months = 504 periods (2018-01 through 2059-12).
+# Both `gen_calendar_fiscal_period_v` and `fiscal_year_period` honour this cap
+# so fact FK values can never escape the dim's PK domain.
+# Raise FISCAL_MAX_YEARS if you need more than 504 distinct fiscal periods.
 FISCAL_START_YEAR: int = 2018
-FISCAL_MAX_YEARS: int = 16
-FISCAL_MAX_PERIODS: int = FISCAL_MAX_YEARS * 12
+FISCAL_MAX_YEARS: int = 42
+FISCAL_MAX_PERIODS: int = FISCAL_MAX_YEARS * 12  # 504
 
 
 def fiscal_period_values(
